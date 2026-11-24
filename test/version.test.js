@@ -15,12 +15,6 @@ test('源模块导出版本，且与 package.json 一致', () => {
   assert.equal(typeof convert, 'function', '默认导出仍是 convert，未被破坏');
 });
 
-test('ESM 产物导出 version / VERSION', async () => {
-  const mod = await import('../dist/pdftomd.esm.min.js');
-  assert.equal(mod.VERSION, EXPECTED);
-  assert.equal(mod.version, EXPECTED);
-});
-
 test('UMD 产物把 version 挂到全局对象（new Function 模拟浏览器 script）', () => {
   const code = readFileSync(fileURLToPath(new URL('dist/pdftomd.umd.min.js', root)), 'utf8');
   const sandbox = {};

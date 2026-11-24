@@ -1,9 +1,9 @@
 /**
- * Build two distributables from our own pdftomd source ("不管 pdf.js"):
- *   dist/pdftomd.esm.min.js — ESM for Node/bundlers; pdfjs-dist + node built-ins
- *                             stay external and resolve at runtime.
+ * Build the distributable from our own pdftomd source ("不管 pdf.js"):
  *   dist/pdftomd.umd.min.js — UMD/IIFE for browsers & script tags; exposes
  *                             global `PdfToMd`, reads pdfjs from `pdfjsLib`.
+ *
+ * ESM 打包暂时用不到，已在下方注释，需要时取消注释即可恢复。
  *
  * Only our converter code is bundled; pdf.js itself is never embedded.
  */
@@ -28,15 +28,16 @@ const common = {
 };
 
 // --- ESM: real external imports, resolved by Node or a bundler at runtime ---
-await build({
-  ...common,
-  format: 'esm',
-  platform: 'node',
-  target: ['node18'],
-  outfile: 'dist/pdftomd.esm.min.js.tmp',
-  external: ['node:*', 'fs', 'zlib', 'path', 'buffer', 'pdfjs-dist', 'pdfjs-dist/*'],
-});
-await rename('dist/pdftomd.esm.min.js.tmp', 'dist/pdftomd.esm.min.js');
+// 暂时不需要 ESM 打包产物，先注释保留，需要时取消注释即可恢复。
+// await build({
+//   ...common,
+//   format: 'esm',
+//   platform: 'node',
+//   target: ['node18'],
+//   outfile: 'dist/pdftomd.esm.min.js.tmp',
+//   external: ['node:*', 'fs', 'zlib', 'path', 'buffer', 'pdfjs-dist', 'pdfjs-dist/*'],
+// });
+// await rename('dist/pdftomd.esm.min.js.tmp', 'dist/pdftomd.esm.min.js');
 
 // --- UMD/IIFE: externals become lazy reads from browser globals -------------
 // pdfjs-dist -> globalThis.pdfjsLib; node:fs -> pdfToMdFs; node:zlib -> pdfToMdZlib
@@ -89,4 +90,4 @@ await build({
 });
 await rename('dist/pdftomd.umd.min.js.tmp', 'dist/pdftomd.umd.min.js');
 
-console.log('Built dist/pdftomd.esm.min.js and dist/pdftomd.umd.min.js');
+console.log('Built dist/pdftomd.umd.min.js');
