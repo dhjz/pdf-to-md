@@ -199,14 +199,15 @@ CLI 可用 `node cli.js --version`（或 `-V`）查看。`package.json` 的 `ver
 import { evaluateBoundaryRow, foldContinuationHeadRows } from '@dhjzz/pdf-to-md';
 ```
 
-## 打包产物（UMD / ESM）
+## 打包产物（UMD）
 
-仓库内已提交两份压缩产物，均已入库、不被 `.gitignore` 忽略：
+仓库内已提交一份压缩产物，已入库、不被 `.gitignore` 忽略：
 
 | 文件 | 格式 | 适用场景 |
 | --- | --- | --- |
-| `dist/pdftomd.esm.min.js` | ESM (`import`) | Node 18+ / 现代打包器；pdfjs-dist、node 内置模块保持 external，运行时解析 |
 | `dist/pdftomd.umd.min.js` | UMD/IIFE，全局 `PdfToMd` | 浏览器 `<script>` 直引；pdfjs 从全局 `pdfjsLib` 读取 |
+
+ESM 打包暂时用不到，已在 `build.js` 中注释；Node/打包器可直接从源码入口导入。
 
 > 只打包我们自己的转换逻辑；pdf.js 本身不进包（"不管 pdf.js"）。
 > UMD 在浏览器里需要宿主先提供全局 `pdfjsLib`；传 `Uint8Array`/`ArrayBuffer` 输入即可，
@@ -216,14 +217,7 @@ import { evaluateBoundaryRow, foldContinuationHeadRows } from '@dhjzz/pdf-to-md'
 
 ```bash
 npm install
-npm run build     # 生成 dist/pdftomd.esm.min.js 与 dist/pdftomd.umd.min.js
-```
-
-ESM 用法：
-
-```js
-import { convert } from './dist/pdftomd.esm.min.js';
-const { markdown } = await convert(bytes); // bytes: Uint8Array / ArrayBuffer
+npm run build     # 生成 dist/pdftomd.umd.min.js（ESM 打包已注释）
 ```
 
 UMD（浏览器）用法：

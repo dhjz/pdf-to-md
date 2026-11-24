@@ -151,8 +151,7 @@ npm run gen:auto
   「PLAN/TERM/SEX」两套完全不同的中英文词汇验证同一几何形态照样识别；普通连续正文不误判。
 - 顺带补 `readingOrderLines()` 的 `height` 字段，render2 才能靠字号区分标题与说明行；
   `4. 无线费率表` 这类单层编号标题恢复为 `##`。
-- 三份 `*_auto.md` 与基线逐字一致（无回归）；`*_auto.json` 重新生成；dist 双产物重打，
-  ESM 产物与 src 输出逐字一致，网页 vendor 同步。
+- 三份 `*_auto.md` 与基线逐字一致（无回归）；`*_auto.json` 重新生成；dist 产物重打，网页 vendor 同步。
 - 渲染截图 `render-check/sample_labelrows*.png`：marked 渲染后 label 行逐行独立、费率表 11 列规整。
 
 `npm test` 18/18（`blocks.test.js` 4 条新增）。

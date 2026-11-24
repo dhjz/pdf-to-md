@@ -6,8 +6,8 @@
   "main": "src/index.js",
   "exports": {
     ".": {
-      "import": "./dist/pdftomd.esm.min.js",
-      "default": "./dist/pdftomd.esm.min.js"
+      "import": "./src/index.js",
+      "default": "./src/index.js"
     },
     "./umd": "./dist/pdftomd.umd.min.js",
     "./src": "./src/index.js",
