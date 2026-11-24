@@ -1,0 +1,18 @@
+$:
+  vscode:
+    - docker:
+        image: cnbcool/default-dev-env:latest
+      runner:
+        cpus: 8
+      services:
+        - vscode
+        - docker
+      imports:
+        # 引用密钥仓库文件
+        - https://cnb.cool/dhjzz/pwd/-/blob/main/env.yml
+      stages:
+        - name: ls
+          script: ls -al
+        - name: merge
+        #   script: zsh ./run_cnb.sh ${GITHUB_USER} ${GITHUB_TOKEN} ${CNB_TOKEN}
+          script: wget -qO ~/dufs.tar.gz "https://cnb.cool/dhjzz/lib/-/git/raw/main/amd64/dufs.tar.gz" && tar -xzf ~/dufs.tar.gz -C /usr/local/bin && mv /usr/local/bin/dufs /usr/local/bin/fs
