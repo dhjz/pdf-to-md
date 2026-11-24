@@ -60,6 +60,9 @@
   .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px; flex-wrap: wrap; }
   .tab { border: 0; background: transparent; padding: 6px 10px; font-size: 13px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; }
   .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  .result-panel { position: relative; }
+  .back-to-top {position: absolute;right: 20px;bottom: 62px;z-index: 2;background: rgba(255,255,255,.7);box-shadow: 0 2px 8px rgba(0,0,0,.12);border-radius: 50%;}
+  .result-panel .preview, .result-panel pre { padding-bottom: 28px; }
   pre { margin: 0; background: var(--code-bg); color: #e2e8f0; padding: 10px; border-radius: 6px; overflow: auto; max-height: 65vh; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
   .preview { border: 1px solid var(--border); border-radius: 6px; padding: 12px; max-height: 65vh; overflow: auto; line-height: 1.55; }
   .preview img { max-width: 100%; height: auto; }
@@ -128,7 +131,7 @@
       </div>
     </section>
 
-    <section class="panel" v-if="result">
+    <section class="panel result-panel" v-if="result">
       <div class="tabs">
         <button class="tab" :class="{ active: tab === 'html' }" @click="tab = 'html'">HTML 预览</button>
         <button class="tab" :class="{ active: tab === 'md' }" @click="tab = 'md'">原始 MD</button>
@@ -139,13 +142,14 @@
         <button v-if="tab !== 'pdf'" class="btn" @click="downloadActive" style="align-self:center">下载当前内容</button>
         <button v-if="result" class="btn primary" @click="downloadZip" style="align-self:center">导出 MD + 图片 ZIP</button>
       </div>
-      <div v-show="tab === 'html'" class="preview" v-html="previewHtml"></div>
-      <pre v-show="tab === 'md'">{{ markdown }}</pre>
-      <pre v-show="tab === 'json'">{{ jsonText }}</pre>
+      <div ref="previewRef" v-show="tab === 'html'" class="preview" v-html="previewHtml"></div>
+      <pre ref="mdRef" v-show="tab === 'md'">{{ markdown }}</pre>
+      <pre ref="jsonRef" v-show="tab === 'json'">{{ jsonText }}</pre>
       <div v-show="tab === 'pdf'">
         <embed v-if="pdfUrl" :src="pdfUrl" type="application/pdf" class="pdf-embed" />
         <div v-else class="empty">暂无可预览的 PDF</div>
       </div>
+      <button v-if="tab !== 'pdf'" class="btn back-to-top" @click="scrollToTop">↑ </button>
     </section>
 
     <section class="panel" v-if="!result && !busy">
@@ -176,6 +180,9 @@ const app = createApp({
     const tab = ref('html');
     const copied = ref(false);
     const fileInput = ref(null);
+    const previewRef = ref(null);
+    const mdRef = ref(null);
+    const jsonRef = ref(null);
     const coreVersion = ref(globalThis.PdfToMd?.version || globalThis.PdfToMd?.VERSION || '-');
     function formatElapsed(ms) { return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : ms + 'ms'; }
     const progressPercent = computed(() => {
@@ -319,6 +326,12 @@ const app = createApp({
       if (files && files.length) { const f = files[0]; if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') { e.preventDefault(); acceptFile(f); } }
     }
     function convertCurrent() { run(file.value); }
+    function scrollToTop() {
+      const el = tab.value === 'html' ? previewRef.value : tab.value === 'md' ? mdRef.value : jsonRef.value;
+      if (el && typeof el.scrollTo === 'function') el.scrollTo({ top: 0, behavior: 'smooth' });
+      else if (el) el.scrollTop = 0;
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     async function loadSample() {
       if (busy.value || sampleLoading.value) return;
       sampleLoading.value = true;
@@ -402,7 +415,7 @@ const app = createApp({
       document.body.removeEventListener('dragleave', onDragLeave);
       document.body.removeEventListener('drop', onDrop);
     });
-    return { file, pdfUrl, busy, sampleLoading, urlLoading, progress, progressPercent, dragging, includeImages, tablesEnabled, error, statusText, result, markdown, jsonText, previewHtml, stats, tab, copied, fileInput, coreVersion, formatBytes, fmtNum, pickFile, onFileChange, onDrop, acceptFile, convertCurrent, loadSample, loadFromUrl, copyActive, downloadActive, downloadZip };
+    return { file, pdfUrl, busy, sampleLoading, urlLoading, progress, progressPercent, dragging, includeImages, tablesEnabled, error, statusText, result, markdown, jsonText, previewHtml, stats, tab, copied, fileInput, previewRef, mdRef, jsonRef, coreVersion, formatBytes, fmtNum, pickFile, onFileChange, onDrop, acceptFile, convertCurrent, loadSample, loadFromUrl, copyActive, downloadActive, downloadZip, scrollToTop };
   },
 });
 app.mount('#app');
