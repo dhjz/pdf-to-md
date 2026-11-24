@@ -1,0 +1,43 @@
+{
+  "name": "@dhjzz/pdf-to-md",
+  "version": "1.1.6",
+  "description": "Pure-text PDF to Markdown converter with binary image extraction and cross-page table stitching",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/pdftomd.esm.min.js",
+      "default": "./dist/pdftomd.esm.min.js"
+    },
+    "./umd": "./dist/pdftomd.umd.min.js",
+    "./src": "./src/index.js",
+    "./cli": "./cli.js"
+  },
+  "bin": {
+    "pdf-to-md": "./cli.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "convert": "node cli.js",
+    "build": "node build.js",
+    "prepublishOnly": "npm run build",
+    "gen:auto": "node scripts/gen-auto.mjs"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38"
+  },
+  "keywords": [
+    "pdf",
+    "markdown",
+    "pdf-to-md",
+    "table",
+    "wasm"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.25.12"
+  }
+}

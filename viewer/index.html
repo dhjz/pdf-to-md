@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PDF → Markdown 转换器</title>
+
+<!-- Promise.withResolvers 垫片：pdf.js 4.x 主线程与 worker 都会用到（worker 里的 createStreamSink 也调），
+     老浏览器没有。这里定义一次，下面用 Blob 把同一份垫片注入到 worker 内部。 -->
+<script>
+function installWithResolvers(scope) {
+  if (typeof scope.Promise.withResolvers === 'function') return;
+  scope.Promise.withResolvers = function withResolvers() {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    return { promise, resolve, reject };
+  };
+}
+installWithResolvers(globalThis);
+</script>
+
+<!-- 第三方依赖一行一个 script src；pdf.js 保持项目既有内核 4.10.38，用 ES module 入口。 -->
+<script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/vue/3.4.21/vue.global.prod.js"></script>
+<script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/marked/16.1.2/lib/marked.umd.min.js"></script>
+<script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script type="module">
+  import * as pdfjs from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
+  window.pdfjsLib = pdfjs;
+  // worker 是独立作用域，主线程垫片够不到；用官方支持的 CDN wrapper：
+  // worker 内第一行先补同样的垫片，再 import 原 worker 文件。
+  const workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+  const workerSource = '(' + installWithResolvers.toString() + ')(globalThis); await import("' + workerUrl + '");';
+  pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
+  await import('../dist/pdftomd.umd.min.js');
+  window.dispatchEvent(new Event('pdftomd-ready'));
+</script>
+<style>
+  :root {
+    --bg: #f5f6fa; --panel: #fff; --text: #1f2430; --muted: #6b7280;
+    --border: #e5e7eb; --primary: #2563eb; --primary-soft: #eff6ff;
+    --code-bg: #0f172a; --danger: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+  button, input, label { font: inherit; }
+  [v-cloak] { display: none; }
+  .app { max-width: 1200px; margin: 0 auto; padding: 12px 14px 24px; }
+  .title-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  header h1 { margin: 0 0 4px; font-size: 20px; }
+  .version-badge { font-size: 11px; color: var(--muted); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; }
+  header p { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .drop-zone { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 14px; text-align: center; transition: .15s; background: #fbfcfe; cursor: pointer; }
+  .drop-zone.drag-over { border-color: var(--primary); background: var(--primary-soft); }
+  .drop-zone h2 { margin: 4px 0 2px; font-size: 15px; }
+  .drop-zone p { margin: 2px 0; color: var(--muted); font-size: 12px; }
+  .btn { border: 1px solid var(--border); background: #fff; padding: 5px 10px; border-radius: 6px; cursor: pointer; color: var(--text); font-size: 12px; }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.primary:disabled { opacity: .5; cursor: not-allowed; }
+  .options { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+  .options label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; }
+  .status { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .status.error { color: var(--danger); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+  .stat { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; }
+  .stat .k { color: var(--muted); font-size: 11px; }
+  .stat .v { font-size: 14px; font-weight: 600; margin-top: 0; word-break: break-all; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px; flex-wrap: wrap; }
+  .tab { border: 0; background: transparent; padding: 6px 10px; font-size: 13px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  pre { margin: 0; background: var(--code-bg); color: #e2e8f0; padding: 10px; border-radius: 6px; overflow: auto; max-height: 65vh; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .preview { border: 1px solid var(--border); border-radius: 6px; padding: 12px; max-height: 65vh; overflow: auto; line-height: 1.55; }
+  .preview img { max-width: 100%; height: auto; }
+  .preview table { border-collapse: collapse; }
+  .preview th, .preview td { border: 1px solid #cbd5e1; padding: 4px 7px; }
+  .preview pre { background: #f1f5f9; color: #0f172a; max-height: none; }
+  .preview code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; }
+  .preview blockquote { margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--primary); background: var(--primary-soft); border-radius: 0 6px 6px 0; color: #334155; }
+  .preview blockquote > :first-child { margin-top: 0; }
+  .preview blockquote > :last-child { margin-bottom: 0; }
+  .preview blockquote blockquote { border-left-color: #93c5fd; margin: 8px 0; }
+  .pdf-embed { display: block; width: 100%; height: 72vh; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  .empty { color: var(--muted); text-align: center; padding: 28px 0; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .toolbar .left { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <div class="app">
+    <header>
+      <div class="title-row">
+        <h1>PDF → Markdown 转换器</h1>
+        <span class="version-badge">v{{ coreVersion }}</span>
+      </div>
+      <p>内核来自 pdf-to-md（pdf.js + 自研结构化层），转换全程在浏览器本地完成。</p>
+    </header>
+
+    <section class="panel">
+      <div class="drop-zone" :class="{ 'drag-over': dragging }" @click="pickFile">
+        <div style="font-size:24px">📄</div>
+        <h2>拖入 PDF、粘贴文件，或点击选择</h2>
+        <p>支持拖拽 / Ctrl+V 粘贴 / 点击上传，全程本地处理，文件不会离开浏览器</p>
+        <input ref="fileInput" type="file" accept="application/pdf,.pdf" style="display:none" @change="onFileChange" />
+      </div>
+      <div class="options">
+        <label><input type="checkbox" v-model="includeImages" :disabled="busy" /> 在正文中包含图片（data:image base64 内联）</label>
+        <label><input type="checkbox" v-model="tablesEnabled" :disabled="busy" /> 重建表格结构</label>
+        <button class="btn primary" @click="convertCurrent" :disabled="!file || busy">{{ busy ? '转换中…' : '重新转换' }}</button>
+      </div>
+      <div class="status" :class="{ error: !!error }">{{ statusText }}</div>
+    </section>
+
+    <section class="panel" v-if="stats">
+      <div class="toolbar">
+        <strong>转换统计</strong>
+        <span class="status">输出字符数 {{ fmtNum(stats.charCount) }} · 非空白 {{ fmtNum(stats.nonWhitespace) }} · 大小 {{ formatBytes(stats.byteLength) }} · 耗时 {{ stats.elapsedMs }} ms</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">字符数</div><div class="v">{{ fmtNum(stats.charCount) }}</div></div>
+        <div class="stat"><div class="k">非空白字符数</div><div class="v">{{ fmtNum(stats.nonWhitespace) }}</div></div>
+        <div class="stat"><div class="k">Markdown 大小</div><div class="v">{{ formatBytes(stats.byteLength) }}</div></div>
+        <div class="stat"><div class="k">PDF 页数</div><div class="v">{{ fmtNum(stats.pageCount) }}</div></div>
+        <div class="stat"><div class="k">文本项</div><div class="v">{{ fmtNum(stats.textItems) }}</div></div>
+        <div class="stat"><div class="k">表格数</div><div class="v">{{ fmtNum(stats.tableCount) }}</div></div>
+        <div class="stat"><div class="k">图片数量</div><div class="v">{{ fmtNum(stats.imageCount) }}</div></div>
+        <div class="stat"><div class="k">图片数据总大小</div><div class="v">{{ formatBytes(stats.imageBytes) }}</div></div>
+        <div class="stat"><div class="k">含图正文大小</div><div class="v">{{ formatBytes(stats.inlinedBytes) }}</div></div>
+        <div class="stat"><div class="k">转换耗时</div><div class="v">{{ stats.elapsedMs }} ms</div></div>
+      </div>
+    </section>
+
+    <section class="panel" v-if="result">
+      <div class="tabs">
+        <button class="tab" :class="{ active: tab === 'html' }" @click="tab = 'html'">HTML 预览</button>
+        <button class="tab" :class="{ active: tab === 'md' }" @click="tab = 'md'">原始 MD</button>
+        <button class="tab" :class="{ active: tab === 'json' }" @click="tab = 'json'">JSON</button>
+        <button class="tab" :class="{ active: tab === 'pdf' }" @click="tab = 'pdf'">PDF 预览</button>
+        <div style="flex:1"></div>
+        <button v-if="tab !== 'pdf'" class="btn" @click="copyActive" style="align-self:center">{{ copied ? '已复制' : '复制当前内容' }}</button>
+        <button v-if="tab !== 'pdf'" class="btn" @click="downloadActive" style="align-self:center">下载当前内容</button>
+        <button v-if="result" class="btn primary" @click="downloadZip" style="align-self:center">导出 MD + 图片 ZIP</button>
+      </div>
+      <div v-show="tab === 'html'" class="preview" v-html="previewHtml"></div>
+      <pre v-show="tab === 'md'">{{ markdown }}</pre>
+      <pre v-show="tab === 'json'">{{ jsonText }}</pre>
+      <div v-show="tab === 'pdf'">
+        <embed v-if="pdfUrl" :src="pdfUrl" type="application/pdf" class="pdf-embed" />
+        <div v-else class="empty">暂无可预览的 PDF</div>
+      </div>
+    </section>
+
+    <section class="panel" v-if="!result && !busy">
+      <div class="empty">转换结果会显示在这里</div>
+    </section>
+  </div>
+</div>
+
+<script>
+// 内核是浏览器版 UMD 产物；浏览器没有 node:zlib，提供等价的 stored-DEFLATE 实现。
+function pdftomdDeflateRaw(data) {
+  const out = new Uint8Array(2 + 5 * Math.ceil(data.length / 65535) + data.length);
+  let o = 0;
+  out[o++] = 0x78; out[o++] = 0x01;
+  let pos = 0;
+  do {
+    const len = Math.min(65535, data.length - pos);
+    const final = pos + len >= data.length ? 1 : 0;
+    out[o++] = final; out[o++] = len & 0xff; out[o++] = len >>> 8; out[o++] = (~len) & 0xff; out[o++] = ((~len) >>> 8) & 0xff;
+    out.set(data.subarray(pos, pos + len), o); o += len; pos += len;
+  } while (pos < data.length);
+  return out.subarray(0, o);
+}
+globalThis.pdftomdDeflateRaw = pdftomdDeflateRaw;
+
+const { createApp, ref, computed, onMounted, onBeforeUnmount } = Vue;
+const app = createApp({
+  setup() {
+    const file = ref(null);
+    const pdfUrl = ref('');
+    const busy = ref(false);
+    const dragging = ref(false);
+    const includeImages = ref(true);
+    const tablesEnabled = ref(true);
+    const error = ref('');
+    const result = ref(null);
+    const markdown = ref('');
+    const jsonText = ref('');
+    const previewHtml = ref('');
+    const stats = ref(null);
+    const tab = ref('html');
+    const copied = ref(false);
+    const fileInput = ref(null);
+    const coreVersion = ref(globalThis.PdfToMd?.version || globalThis.PdfToMd?.VERSION || '-');
+    const statusText = computed(() => error.value ? error.value : busy.value ? '正在解析 PDF，请稍候…' : file.value ? `已就绪：${file.value.name}（${formatBytes(file.value.size)}）` : '等待选择 PDF 文件');
+
+    function updateCoreVersion() {
+      coreVersion.value = globalThis.PdfToMd?.version || globalThis.PdfToMd?.VERSION || '-';
+    }
+    function formatBytes(n) {
+      if (!n && n !== 0) return '-';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      return (n / 1024 / 1024).toFixed(2) + ' MB';
+    }
+    function fmtNum(n) { return (n || 0).toLocaleString('zh-CN'); }
+    function base64(bytes) {
+      let s = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) s += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      return btoa(s);
+    }
+    function dataUri(img) {
+      const ct = img.contentType === 'image/jpeg' ? 'image/jpeg' : 'image/png';
+      return `data:${ct};base64,${base64(img.bytes)}`;
+    }
+    function inlineImages(md, images) {
+      if (!images.length) return md;
+      const uris = images.map(dataUri);
+      // 先替换转换器发出的显式图片占位符 images/pN-...；正文里的普通 images/ 文本不动。
+      let cursor = 0;
+      let out = md.replace(/!\[[^\]]*\]\(images\/[^)]+\.[a-z0-9]+\)/gi, m => cursor < uris.length ? `![](${uris[cursor++]})` : m);
+      uris.splice(0, cursor);
+      for (const uri of uris) out += `\n\n![](${uri})`; // 剩余图片追加到末尾
+      return out;
+    }
+    function buildJson(converted, mdWithImages) {
+      return JSON.stringify({
+        markdown: mdWithImages,
+        markdownRaw: converted.markdown,
+        stats: converted.stats,
+        imageManifest: converted.imageManifest,
+        images: converted.images.map((img, i) => ({
+          index: i + 1, page: img.page, name: img.name,
+          width: img.width, height: img.height, contentType: img.contentType,
+          bytesLength: img.bytes.length, base64: base64(img.bytes),
+        })),
+        pages: converted.pages.map(p => ({ pageNumber: p.pageNumber, blocks: p.blocks.map(b => ({ type: b.type, text: b.text })) })),
+        stitchLog: converted.stitchLog,
+      }, null, 2);
+    }
+    function escapeHtml(s) { return s.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
+    function renderPreview(md) {
+      if (typeof marked === 'undefined') return `<pre>${escapeHtml(md)}</pre>`;
+      let raw;
+      try {
+        // marked v16 推荐 Marked 实例 .parse；全局 marked.parse 仍可用，但传 options 会告警。
+        raw = (marked.Marked ? new marked.Marked({ gfm: true, breaks: false }).parse(md) : marked.parse(md, { gfm: true, breaks: false }));
+      } catch (e) { raw = marked.parse(md); }
+      return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(raw, { ADD_ATTR: ['target'] }) : raw;
+    }
+    async function run(fileToConvert) {
+      if (!fileToConvert) return;
+      error.value = ''; result.value = null; copied.value = false;
+      busy.value = true;
+      const started = performance.now();
+      try {
+        console.info('[pdf-to-md] 开始转换', fileToConvert.name || 'PDF');
+        const buffer = await fileToConvert.arrayBuffer();
+        const converted = await PdfToMd.convert(new Uint8Array(buffer), { tables: tablesEnabled.value, debug: true });
+        console.info('[pdf-to-md] 转换完成', converted, `耗时 ${Math.round(performance.now() - started)}ms`);
+        if (converted.diagnostics?.reason) console.log('[pdf-to-md] 未识别到文字:', converted.diagnostics.reason);
+        const md = converted.markdown;
+        const mdWithImages = includeImages.value ? inlineImages(md, converted.images) : md;
+        const imageBytes = converted.images.reduce((n, img) => n + img.bytes.length, 0);
+        const encoded = new TextEncoder().encode(mdWithImages).length;
+        stats.value = {
+          charCount: mdWithImages.length,
+          nonWhitespace: (mdWithImages.match(/\S/g) || []).length,
+          byteLength: encoded,
+          pageCount: converted.stats.pageCount,
+          textItems: converted.stats.textItems,
+          tableCount: converted.stats.tableCount,
+          imageCount: converted.images.length,
+          imageBytes,
+          inlinedBytes: includeImages.value ? encoded : 0,
+          elapsedMs: Math.round(performance.now() - started),
+        };
+        markdown.value = mdWithImages;
+        jsonText.value = buildJson(converted, mdWithImages);
+        previewHtml.value = renderPreview(mdWithImages);
+        result.value = converted;
+        tab.value = 'html';
+      } catch (e) {
+        console.error(e);
+        error.value = '转换失败：' + (e && e.message ? e.message : String(e));
+        stats.value = null;
+      } finally {
+        busy.value = false;
+      }
+    }
+    function pickFile() { fileInput.value && fileInput.value.click(); }
+    function onFileChange(e) { const f = e.target.files && e.target.files[0]; if (f) acceptFile(f); e.target.value = ''; }
+    function acceptFile(f) {
+      if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { error.value = '请选择 PDF 文件'; return; }
+      if (pdfUrl.value) URL.revokeObjectURL(pdfUrl.value);
+      pdfUrl.value = URL.createObjectURL(f);
+      file.value = f;
+      run(f);
+    }
+    function onDragOver(e) { e.preventDefault(); dragging.value = true; }
+    function onDragLeave(e) { if (!e.relatedTarget || !document.body.contains(e.relatedTarget)) dragging.value = false; }
+    function onDrop(e) { e.preventDefault(); dragging.value = false; const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) acceptFile(f); }
+    function onPaste(e) {
+      const files = e.clipboardData && e.clipboardData.files;
+      if (files && files.length) { const f = files[0]; if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') { e.preventDefault(); acceptFile(f); } }
+    }
+    function convertCurrent() { run(file.value); }
+    const activeText = computed(() => tab.value === 'md' ? markdown.value : tab.value === 'json' ? jsonText.value : previewHtml.value);
+    function copyActive() {
+      const text = tab.value === 'html' ? markdown.value : activeText.value;
+      navigator.clipboard.writeText(text).then(() => { copied.value = true; setTimeout(() => copied.value = false, 1500); });
+    }
+    function downloadZip() {
+      if (!result.value) return;
+      const bytes = PdfToMd.createMarkdownZip(result.value, { fileName: (file.value ? file.value.name.replace(/\.pdf$/i, '') : 'document') });
+      const blob = new Blob([bytes], { type: 'application/zip' });
+      const name = (file.value ? file.value.name.replace(/\.pdf$/i, '') : 'document') + '.zip';
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
+    }
+    function downloadActive() {
+      const ext = tab.value === 'html' ? 'html' : tab.value === 'json' ? 'json' : 'md';
+      const mime = tab.value === 'html' ? 'text/html' : tab.value === 'json' ? 'application/json' : 'text/markdown';
+      const name = (file.value ? file.value.name.replace(/\.pdf$/i, '') : 'output') + '.' + ext;
+      const blob = new Blob([tab.value === 'html' ? `<meta charset="utf-8">${previewHtml.value}` : activeText.value], { type: mime + ';charset=utf-8' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
+    }
+    onMounted(() => {
+      coreVersion.value = globalThis.PdfToMd?.version || globalThis.PdfToMd?.VERSION || '-';
+      window.addEventListener('pdftomd-ready', updateCoreVersion);
+      window.addEventListener('paste', onPaste);
+      document.body.addEventListener('dragover', onDragOver);
+      document.body.addEventListener('dragleave', onDragLeave);
+      document.body.addEventListener('drop', onDrop);
+    });
+    onBeforeUnmount(() => {
+      if (pdfUrl.value) URL.revokeObjectURL(pdfUrl.value);
+      window.removeEventListener('pdftomd-ready', updateCoreVersion);
+      window.removeEventListener('paste', onPaste);
+      document.body.removeEventListener('dragover', onDragOver);
+      document.body.removeEventListener('dragleave', onDragLeave);
+      document.body.removeEventListener('drop', onDrop);
+    });
+    return { file, pdfUrl, busy, dragging, includeImages, tablesEnabled, error, statusText, result, markdown, jsonText, previewHtml, stats, tab, copied, fileInput, coreVersion, formatBytes, fmtNum, pickFile, onFileChange, onDrop, acceptFile, convertCurrent, copyActive, downloadActive, downloadZip };
+  },
+});
+app.mount('#app');
+</script>
+</body>
+</html>

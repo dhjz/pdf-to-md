@@ -1,0 +1,800 @@
+{
+  "source": "sample.pdf",
+  "generatedBy": "src/index.js convert()",
+  "generatedAt": "2026-11-23T08:34:46.494Z",
+  "durationMs": 234,
+  "markdown": "复杂文档解析对齐样例:混合版式本样例用于验证 Rust 解析管线与 MinerU Python 输出在复杂版式下的一致性:双栏正文、项目符号、代码块、内嵌截图、合并单元格、无线费率表以及跨页长表格都包含在内。\n\n## 1. 双栏正文与行内格式\n\n左栏:Rust 版本直接从 PDF 文本层读取行与坐标，再按版面右栏:Python 版本由 MinerU 4.2.3 导出 Markdown。两栏内区域合并。对于文本稀疏的区域会回退到 Layout/OCR容在同一视觉行，但阅读顺序应先左后右；跨栏的标题和表格管线。数值 2026、术语不应被拆碎。\n\nMinerU、标点（逗号、分号；冒号:）都保留原文。\n\n### 1.1 列表与链接\n\n无序项一:检查标题层级。\n\n•无序项二:检查表格列数。\n\n•子项 2.1:检查双栏顺序。\n\n• •子项 2.2:检查图片占位符。\n\n•步骤甲:解析文本层。\n\n1步骤乙:重建表格结构。\n\n2参考链接:MinerU 文档与解析规范。\n\n## 2. 代码块与截图\n\n下列代码块应保留为 fenced code block，截图应输出图片占位符并在 OCR 路径中识别其中文字。\n\n```txt\n$ curl -X POST http://127.0.0.1:7860/api/parse \\\n-F 'file=@sample.pdf' -F 'tier=basic'\n{\"engine\": \"rust-mupdf-text-v0\", \"status\": \"ok\"}\n```\n\n图 1:模型控制台截图（含可识别文字）\n\n### 2.1 截图说明\n\n截图里的四行状态文字用于检查图片区域是否被版面模型识别，以及 OCR 文案是否出现在图片占位符附近。\n\n## 3. 合并单元格表格\n\n表 1:任务进度（含合并单元格）\n\n| 模块 | 负责人 | 状态 | 备注 |\n| --- | --- | --- | --- |\n| 版面检测 | 张三 | 完成 | PP-DocLayoutV2 |\n| 文本识别 | 李四 | 进行中 | PP-OCRv6 |\n| 结构还原 | 王五 | 待复核 | SLANet-plus |\n| 合计 |  |  | 跨行备注 A |\n\n## 4. 无线费率表\n\n方案一 | 基本责任\n\n保险期间 20年\n\n性别男性女性\n\n交费期间 3年交 5年交 10年交 15年交 20年交年龄\n\n| 年龄 | 男3年 | 男5年 | 男10年 | 男15年 | 男20年 | 女3年 | 女5年 | 女10年 | 女15年 | 女20年 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 18 | 25.86 | 26.00 | 26.14 | 26.29 | 26.43 | 26.57 | 26.71 | 26.86 | 27.00 | 27.14 |\n| 19 | 27.29 | 27.43 | 27.57 | 27.71 | 27.86 | 28.00 | 28.14 | 28.29 | 28.43 | 28.57 |\n| 20 | 28.71 | 28.86 | 29.00 | 29.14 | 29.29 | 29.43 | 29.57 | 29.71 | 29.86 | 30.00 |\n| 21 | 30.14 | 30.29 | 30.43 | 30.57 | 30.71 | 30.86 | 31.00 | 31.14 | 31.29 | 31.43 |\n| 22 | 31.57 | 31.71 | 31.86 | 32.00 | 32.14 | 32.29 | 32.43 | 32.57 | 32.71 | 32.86 |\n| 23 | 33.00 | 33.14 | 33.29 | 33.43 | 33.57 | 33.71 | 33.86 | 34.00 | 34.14 | 34.29 |\n| 24 | 34.43 | 34.57 | 34.71 | 34.86 | 35.00 | 35.14 | 35.29 | 35.43 | 35.57 | 35.71 |\n| 25 | 35.86 | 36.00 | 36.14 | 36.29 | 36.43 | 36.57 | 36.71 | 36.86 | 37.00 | 37.14 |\n| 26 | 37.29 | 37.43 | 37.57 | 37.71 | 37.86 | 38.00 | 38.14 | 38.29 | 38.43 | 38.57 |\n| 27 | 38.71 | 38.86 | 39.00 | 39.14 | 39.29 | 39.43 | 39.57 | 39.71 | 39.86 | 40.00 |\n| 28 | 40.14 | 40.29 | 40.43 | 40.57 | 40.71 | 40.86 | 41.00 | 41.14 | 41.29 | 41.43 |\n| 29 | 41.57 | 41.71 | 41.86 | 42.00 | 42.14 | 42.29 | 42.43 | 42.57 | 42.71 | 42.86 |\n| 30 | 43.00 | 43.14 | 43.29 | 43.43 | 43.57 | 43.71 | 43.86 | 44.00 | 44.14 | 44.29 |\n| 31 | 44.43 | 44.57 | 44.71 | 44.86 | 45.00 | 45.14 | 45.29 | 45.43 | 45.57 | 45.71 |\n| 32 | 45.86 | 46.00 | 46.14 | 46.29 | 46.43 | 46.57 | 46.71 | 46.86 | 47.00 | 47.14 |\n| 33 | 47.29 | 47.43 | 47.57 | 47.71 | 47.86 | 48.00 | 48.14 | 48.29 | 48.43 | 48.57 |\n| 34 | 48.71 | 48.86 | 49.00 | 49.14 | 49.29 | 49.43 | 49.57 | 49.71 | 49.86 | 50.00 |\n| 35 | 50.14 | 50.29 | 50.43 | 50.57 |  | 50.86 | 51.00 | 51.14 | 51.29 |  |\n| 36 | 51.57 | 51.71 | 51.86 | 52.00 |  | 52.29 | 52.43 | 52.57 | 52.71 |  |\n| 37 | 53.00 | 53.14 | 53.29 | 53.43 |  | 53.71 | 53.86 | 54.00 | 54.14 |  |\n| 38 | 54.43 | 54.57 | 54.71 | 54.86 |  | 55.14 | 55.29 | 55.43 | 55.57 |  |\n\n## 5. 跨页长表格\n\n下表故意跨越多页，表头由 ReportLab 自动重复；单元格内是长中文文本，用于验证续表行序与列对齐。\n\n表 2:跨页回归检查项\n\n| 编号 | 分组 | 检查项 | 结论 | 说明 |\n| --- | --- | --- | --- | --- |\n| 1 | 版面 | 第01项:跨页单元格长文本检查 | 通过 | 第01行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 2 | 结构 | 第02项:跨页单元格长文本检查 | 通过 | 第02行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 3 | 版面 | 第03项:跨页单元格长文本检查 | 通过 | 第03行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 4 | 结构 | 第04项:跨页单元格长文本检查 | 通过 | 第04行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 5 | 版面 | 第05项:跨页单元格长文本检查 | 待复核 | 第05行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 6 | 结构 | 第06项:跨页单元格长文本检查 | 通过 | 第06行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 7 | 版面 | 第07项:跨页单元格长文本检查 | 通过 | 第07行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 8 | 结构 | 第08项:跨页单元格长文本检查 | 通过 | 第08行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 9 | 版面 | 第09项:跨页单元格长文本检查 | 通过 | 第09行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 10 | 结构 | 第10项:跨页单元格长文本检查 | 待复核 | 第10行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 11 | 版面 | 第11项:跨页单元格长文本检查 | 通过 | 第11行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 12 | 结构 | 第12项:跨页单元格长文本检查 | 通过 | 第12行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 13 | 版面 | 第13项:跨页单元格长文本检查 | 通过 | 第13行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 14 | 结构 | 第14项:跨页单元格长文本检查 | 通过 | 第14行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 15 | 版面 | 第15项:跨页单元格长文本检查 | 待复核 | 第15行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 16 | 结构 | 第16项:跨页单元格长文本检查 | 通过 | 第16行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 17 | 版面 | 第17项:跨页单元格长文本检查 | 通过 | 第17行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 18 | 结构 | 第18项:跨页单元格长文本检查 | 通过 | 第18行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 19 | 版面 | 第19项:跨页单元格长文本检查 | 通过 | 第19行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 20 | 结构 | 第20项:跨页单元格长文本检查 | 待复核 | 第20行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 21 | 版面 | 第21项:跨页单元格长文本检查 | 通过 | 第21行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 22 | 结构 | 第22项:跨页单元格长文本检查 | 通过 | 第22行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 23 | 版面 | 第23项:跨页单元格长文本检查 | 通过 | 第23行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 24 | 结构 | 第24项:跨页单元格长文本检查 | 通过 | 第24行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 25 | 版面 | 第25项:跨页单元格长文本检查 | 待复核 | 第25行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 26 | 结构 | 第26项:跨页单元格长文本检查 | 通过 | 第26行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 27 | 版面 | 第27项:跨页单元格长文本检查 | 通过 | 第27行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 28 | 结构 | 第28项:跨页单元格长文本检查 | 通过 | 第28行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 29 | 版面 | 第29项:跨页单元格长文本检查 | 通过 | 第29行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 30 | 结构 | 第30项:跨页单元格长文本检查 | 待复核 | 第30行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 31 | 版面 | 第31项:跨页单元格长文本检查 | 通过 | 第31行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 32 | 结构 | 第32项:跨页单元格长文本检查 | 通过 | 第32行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 33 | 版面 | 第33项:跨页单元格长文本检查 | 通过 | 第33行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 34 | 结构 | 第34项:跨页单元格长文本检查 | 通过 | 第34行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 35 | 版面 | 第35项:跨页单元格长文本检查 | 待复核 | 第35行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 36 | 结构 | 第36项:跨页单元格长文本检查 | 通过 | 第36行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 37 | 版面 | 第37项:跨页单元格长文本检查 | 通过 | 第37行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 38 | 结构 | 第38项:跨页单元格长文本检查 | 通过 | 第38行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 39 | 版面 | 第39项:跨页单元格长文本检查 | 通过 | 第39行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 40 | 结构 | 第40项:跨页单元格长文本检查 | 待复核 | 第40行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 41 | 版面 | 第41项:跨页单元格长文本检查 | 通过 | 第41行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 42 | 结构 | 第42项:跨页单元格长文本检查 | 通过 | 第42行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 43 | 版面 | 第43项:跨页单元格长文本检查 | 通过 | 第43行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 44 | 结构 | 第44项:跨页单元格长文本检查 | 通过 | 第44行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 45 | 版面 | 第45项:跨页单元格长文本检查 | 待复核 | 第45行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 46 | 结构 | 第46项:跨页单元格长文本检查 | 通过 | 第46行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 47 | 版面 | 第47项:跨页单元格长文本检查 | 通过 | 第47行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 48 | 结构 | 第48项:跨页单元格长文本检查 | 通过 | 第48行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 49 | 版面 | 第49项:跨页单元格长文本检查 | 通过 | 第49行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 50 | 结构 | 第50项:跨页单元格长文本检查 | 待复核 | 第50行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 51 | 版面 | 第51项:跨页单元格长文本检查 | 通过 | 第51行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 52 | 结构 | 第52项:跨页单元格长文本检查 | 通过 | 第52行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 53 | 版面 | 第53项:跨页单元格长文本检查 | 通过 | 第53行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n| 54 | 结构 | 第54项:跨页单元格长文本检查 | 通过 | 第54行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。 |\n\n### 5.1 表格后的正文\n\n跨页表格结束后这一段必须独立成段，不能被表格吞并，也不能与最后一个单元格连成一行。\n\n## 6. 收尾与边界情况\n\n左侧收尾:表格与正文之间只留一个空行；页脚\"第 N 页\"不应右侧边界:单元格内的英文 Term、数字 0CR/OCR混入正文；截图占位符应位于图题之后、下一节标题之前。\n\n混排；中文顿号、书名号、冒号与括号同时出现；标题层级为#/##/### 三级。\n\n表 3:收尾检查清单\n\n| 检查点 | 期望 | 实际 |\n| --- | --- | --- |\n| 标题层级 | # / ## / ### | 待人工核对 |\n| 图片占位符 | ![](images/...) | 待人工核对 |\n| 合并单元格 | HTML colspan | 待人工核对 |\n\n文档结束。公式识别本轮不纳入，后续单独处理。\n",
+  "stats": {
+    "chars": 7408,
+    "nonWhitespaceChars": 6017,
+    "bytes": 14182,
+    "pages": 7,
+    "images": 1,
+    "imageBytes": 18772,
+    "tableBlocks": 5
+  },
+  "imageManifest": [
+    {
+      "index": 1,
+      "page": 2,
+      "name": "img_p1_1",
+      "width": 640,
+      "height": 250,
+      "contentType": "image/png",
+      "bytesLength": 18772,
+      "placeholder": "images/p2-1-img_p1_1.png",
+      "fileName": "p2-1-img_p1_1.png"
+    }
+  ],
+  "images": [
+    {
+      "index": 1,
+      "page": 2,
+      "name": "img_p1_1",
+      "width": 640,
+      "height": 250,
+      "contentType": "image/png",
+      "bytesLength": 18772,
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAD6CAIAAAC+iWH6AABJG0lEQVR4nO3d918T6f428OdvmSQQIbSgSA9KLypVBUWxYQX7yuqquOuioujqqiCuIorgWsACCmJDRUFUFAELoAgWmoQWIMlk5tnDfXa+cxIIAdyN5+z1fn1+SGYmUzI4V+aee8b/J3ENRKFQKBQK9TfX/zP6GqBQKBQK9Q8sBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBDAKhUKhUEYoBPA/sawnh3iFLTL6aoyxJvqEn72U7xe+1OhrgkKhUKMoBPA/sXKvF9U3fproE84NmRQ0z3fmEo/Qhe4hC/jlO3PJ5OAFunOwdAtevXmX9eSQUSz9++2/yDu7ZNOiuCFWk0KeV72+fufBiObj4DeLZdmIJd8Z/ftEoVCoURQC+J9YUbGbNBrNtZv3uCEXr91iWValUitVKq5UKjXDMPzJuPot4wLLsj8mJZMwDpwb6xe+1Gt6NL/8wpcGzo3V/ezGn/ezLOsydQ5/IMMwdfWNEtfAwLmxu349pvURC1mQ7nxsPcJYlg2Zv2rQbRz0IygUCvXt1CgDmB3Q1i63dAvWHXv9zgMywRhXjmXZksfPv+70k4LmZV7I+/i5WaVSt7S1X8q/9U21YY50k0ddh45nsSz7U1IKeTvofhxq1Lr4PQzD3LxbQt66TJlDdrfmP/H/BizdgrjT5XXxe1iWdfSfzZ+nUqV6WfPWQhb05HkVy7Lb9x7hj43bvk93/mQRugM1Gg3DMK9q3hl9b6JQKJSeGn0AazQMy7LRa+O1Rtl5z+zvV6pU6m8wgIOiVn5p7+hR9J44c3Fr4qH03y8pevu6unuGOov6++tvC2BLt6CTZy8HRa0c6QdjNibQNP286rW9bwQ3cKi2aBv3UHKx9sXLmv2pGWTgmi2JLMs6+M3iT9nb11f1qlbiGiibFvWpqYWm6QWrNnNjbT2nu06ba+8bYec9k6vYTTv6+vqz825Uv6njD7fznukUMNtlypyRbhoKhUL9nTX6AK6oftOvVF28elNr1Iaf9so7u8rKK7+1AJa6h719/6Gzq9s/4v9OeUPmr+pXqmrevjf6nhjdJv/NtfPAb2o1XfTg8XivGXbeMw2/Bnz34eO+vn7PgZ5f+gOY7JSat+9XxP2sf555hUV3istk06IUvX3f/bjX6F8OCoVCjahGH8Alj59fv/Ogu0dh6xHGH3W7+NH5K9dLHj/XCmBLt+BfUk/VN35SqdQfm1qOnDxHTo+4sveNOHspX97Z1aPovZR/i3Sx4aeRhSxo16/H3r7/oFSpmlvbfr+Yr9WMqT+9ftjxK8uyiQePaw0/euo8y7Kzl8UZsp5kEbJpUddu3uvuUTS3fvkl9RR/DbfvPfKmrl6pUn1p77h6455WZ+Nhv4SRbvLYa/G6bbnXi7LzblzILRy0LuXfSv/90h9/K/GJhzQa5nhmjtWkf+Xurful7z98cgowaH18Zy5RqdQXr90yJIANqTkrNmo0zOJ12ySugXuT0zu7ur2mR3/dbwaFQqH+0hpTAK/evItl2dWbd3HDHfxmqVTqhau3agWwhSyo4HaxRqM5eyk/fvfhc1euMwxzp7iMm8DSLfhJRbVaTZ88ezk+8VDu9aInFdVaaXQht5Cm6d8v5m/ZdTD11LnOru6at+/58a8/gIsePGYYRrdl0nvG4pT0s6S70LDrybLso/IXla9qMrOv/pSU8rzqNf+C5ZGT51iWLX5Uvn3vkX1HTn5ubm1qaeMic9iZ627CsJs80rKQBWn1Tgqdvzrhl6Pxuw9vTTy0NfHQ69p3B45mkNektu89silhP5k4YPZy8mLP4RMsyx48ljnRJzxwbqz/rGV+4Ut1K2D28sC5seRHRlbOVY1G4x+xlASw94zFLlPmcK3KvX19/JbkiT7hzgGRzgGRg25FwOzlrV/kLW3t569cJ1t0635pfcPHSUHzjP4vCoVCoQysMQWwrUdYd4+Cf/fIDzt+bZd3WroFawXw+m3/6nezNzmdG7I/NYMf3pt3ap+epv9+iZ9Gyzb8xLLsDzt+5SYIX7xeo9EkJZ/QWquh1rm59cv7D5/0b9ew6/nHOtA0zU0wwWtmZ1f3y5q35G17R+f7D58s3f6dcJ5hi1q/yFf9sNPAmWttgiGbPNJaHredZVm1mib9nLXGRiz5jmXZ0xdy9c9k2YafNBrNjbsPLWRBWjNUqlQ0TbMsS16TflKkm9vk4AVHT513mTqHBDD5C+E+SHps0TTNdcBmWfZpxUvdpS9Ytbld3vmy5i1pujiWmU2aT2revv/c3BoVu+mv/jeDQqFQX6XGFMAS18DLBbf7lSquP07xo/LfL+ZLXAO1Avjh42f9SpWd90xuiK3ndKVKVfTgMXlb8qRCqVJN8Pq/CXxnLuGn0Z3iso7Obpepc1ym/F+9e/+h+nWd7loNWiqVetADOr+GXU8SLfz1fFb5qkfRS1739vU1t7bxeyeNaOZam2DIJo+0JnjN9Jm5eHLwgsSDx7WuEVjIgp5Xvf7U1MKtP/dLgl9hC9YoevvUappsiO7dPj8mJWs1fmhNsOGnvf+6DWnKHG6UhSyIRHVK+ln+B0lbN1dugVG/X8zXaDSPyl+Qpu/svBt/pPimHQdIZ+ynFS9Zli24XRwVuwm3IaFQqG+8xhrAS9b/+K8j4EATpcuUOTRNz1+5WTeAOzq7yV2e/Kp+U9fU0sZNUP3mP3LF0i2Yn0bt8k52MN09Ct21GrS6unuePK/Sv13DrifLslr5V/L4OcMw5PXlgtssyza3fsk4n7vx5/383l6GzFxrEwzZZH65BUZxNewe3Jp4SCuA4xMPMQxD+h5P8Jp5r+TJ7kNpWp+aGrmipa2d/AoZas5aAaxVs5fFdfcotK4BOwXMJpv2rPKV7kdsPcK27z1y616pWk139yiSkk9wvwysJ4fkXL3hPWMx9zezNzm9q7tHqVJ9Oz3bUSgUatAaawBbTQpp7+gsflROjrwDdwYH6QawWk0/flapNZPHzypVKjV5TdP0o/IXQy2FzOF17buFq7dq1YLVWwadXrdq3r6vbxymCXrY9fzXIp5U8Mfyt9TWc/pvGReaWtq4sHxW+co9ZIGBMx/FJmt9XZxh96BWAE8KmtfZ1U06W5F6UlGt6O3jPwZrZvQ6eWdXzdv3127eG10AL1y9taml7XhmjlYAz14Wx7Jsv/JfzdeDth/sPPBb7buG/akZhvRBm+A1M3J53Oj+sFEoFOpvq7EGsMQ1kLQKuk6b+6j8RWb2VTJQK4Bb2tq1TnBJIrbLO8nrL+0dWhOQ5xxxS2lu/TLszUL6A/hywW2NhtHt1+MZtiivsIg80XDY9dRdhG5/b9Kxa8NPe++XPmVZ9l7JEwO/BK35G7LJ/OKH9LATawXw7eJHb+rqpe7/170rdP5qjYa5euPfj8GydAu6dvPei5c1TgGzT527MooA3r73iLyzK2LJd7q9oEl7OOnY9fMvqfrX3MFvFllPS7egvSkn+euMQqFQ/0X1FQI4KnYTy7Kpp85pNMzcmH93gdGKpXulT5Uqla3ndG6IvW+ESqXmwqnkSUW/UsU/mIYvXs9fyr2SJzRNa9308vO+I0sGbkTRXSvdWrRm66C3IZFnQoUtWGPIeuoJYOvJITOj1/FvK7KQBb19/6FfqTLwS9CavyGbPOriAthCFkR6M2VmX01JP3vx6s0HZc9q3zUoevtYlmUYZsaiddynyMqPNIDdAqPulz7tV6rIn4duAD+veq3o7ZO6h1W/qdNtpecX+Vl24GgG+YlA03Tejbtf958ECoVC/T31FQLYQhbU3Nqm0WiaW79wF+e0Apg8SpDffZd0AI7dtIO8JUfthF+OcvO8cfchfynkqM1vI41cHscwzG8ZFwZdK92ydAuqqH7T1d3D3UtDno3V29dXVl5p4HrqCeA5KzayLLs18RA3ysY99FNTC3eJd9iZa83fkE0edfHPgF/VvCt5UnG54PZvGRd+3nckdtOOmdHrJgfP9wxb1N2j0P1KRxrAlm5B565cX7lpJ3+7uAAOW7jmj+nPX7kucQ387se9Wt3CSQXOjX34+Nm0OTEWsiByrsxfVtz2ffyJ56zY+NX/naBQKNRXr68QwNwtQxnn/+/2Fa0AtnQLKiuv1GiYzOyr8YmHLuQWajQMeSwDKRv30Np3DWo1fTwzJ3734fulTy/kFmot5da9UpZlb9x9uH3vkZT0s909ilc17/idiod9jJR/xNKmlrbuHsXRU+fjEw+dPHu5r6+/ufWL78wlBq6n/ibo3OtFDMNcv/Ngx/6jew6fqKh+wz/nHnbmuvMfdpNHXXuT01mWHarDNlfr4vfoXnIeXRM0V/wAtnQLelJR3a9UkSvlFrKg6jd1LW3tWlcKCm4XK3r7yECVSs39UCPtBLXvGsgvPwtZUPzuwwzz7wd0oFAo1LdcXyeAZyxax7Isv+eL7pXR8V4z0n+/1NzaplKp377/kHjwuNZdLpOC5hXcLu7uUbR3dGacz7VxD9VaitWkkF+PZTZ8/KxUqT42tRzPzOH/h3oj+88YmlpUKnVza1tWzlWtPsP611N/AFtNCtl9KO1NXX2/UtXb1/es8pXWIxKH/RJGusmjKKeA2RdyC+WdXSWPn7e1y+N3H+bfVWVIfcUA/v1iPtekTGrW0g00Td8vfcp9M0FRK/nn/UqVin+d2HXaXO4Xye5DaY/KX5DL6ngoBwqF+sYL/x3hP6umzYkhTwvxn7XM0i3ocNqZvr5+RW/fw8fPcq7eOHXuSlpWzrHM7N8yLqSeOpeSfjb5xO8Hj2V+ty2JP5PTF3L5Pbe1SvcOY60iDyRxmTLn2Ol//Z+Guhdxf0k9xbLsuYFG6T9+MRQWPeROf3UDmF8Xr90qflQ+NXJFb1/fo/IXg97HjEKhUN9IIYD/WWUhC0pJP8tv4HWZMifx4PHbxY8+fm7uUfRyNzIxAzSafxV3+ZbUucsFLMtqPenCalLI04qX9Y2fhv3PLTYl/Ov/A37/4RN5aIZuN2YLWdCVgjssy569lO8eskCtpo+eOs+N/djUUnC7eMrs5Vo1Z/n3HZ3dh9POkGd9pJz4HR2kUSjUt1wIYNSI6+K1WyzL6sbblYI77fLOogePyYO1h6pVP+xkWbboweNdvx4bahpLt6DfL+bvO3LSZeqcqZEr+F3BY75PaG5tYwfTo+j1n7XM6N8PCoVCGVIIYNSIy9JN+yGRKBQKhRppIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJCIYBRKBQKhTJC/b9BH2oPAAAAfykEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIxgTAHc3d2dkJBA0zR5q1KpUlJSWJbVaDTJyckajYabkpuGjz9Bf39/cnLyoJPBN4Km6fr6eu4twzD9/f3Dfqqnpyc4OLi3t/cvXju2qakpKipqRH9CDx8+/PTpE3mtUqmuXr3K/5sEAPhLjSmA29raKIri3iqVShMTE/JaIBAwDMONOnTo0LRp00QiUdgAkUgUGBiYnp7e09OTlJTEMExPTw9FUTj8fcuampooiuJ26+vXrymKomlaoVDo2XG9vb0URRkS1Vry8/PNzMykQxCJRK2trfzpP3z4wF89Q4SHh1+9epW87ujooCgqLy8vPz9/pKsKADAKYwrgjo4OU1NTlmVv3LgRERERFRUlEomiBgiFwqioqFmzZl2/fp1MrFAoRCIROZHiYvvLly8CgYCcfwiFQv2LKysroyhKNMDMzMzd3f3IkSPk0K9nlP752NjYTJky5fTp06M++SZz6+zsHN3HR41b4QULFsTGxmqNkkqlb968YVk2NzfXz89PLBa7urqmpqaOKJ845FNyuZy/j969eycSiZRK5aRJk3bs2MEN37NnT0BAQPCfgoKCKIry9/cP5gkICMjMzBzD1rMURbW0tPCHtLS0kD8wTs5/UqvVZPiSJUtmzJgRHh5uY2Pj4+MTHh4eHByclZVFUdSdO3csLCxKSkrGsm4AAIYYUwB3dnaKxWLuAM2yrEQi0XrBjRo0gLu7u0mE0zStdfTUxY86mqYfP37s4OCQmpqqf9Sw8yktLfX09IyOjh5dOBklgJ8+fSoUCslCz549a2lpqVKpuLEPHz6cPHkyOYm0tLQsLCzs6+t7+PChVCrdt2/fSJeVlpb2448/kt3N30eNjY1k7xcWFgqFwosXL5LhWl/jvXv3wsLC5s+ff+nSJf7w0X3bHH4A5+bm2traOjg4UBTlMsDOzo5Ms23btl27du3cuXPQfRQVFXXz5k3ymvv7vHTp0rFjx8aybgAAhhhlAH/+/Hn+/Pnz5s0TCoWLFi1au3YtGa4bwCzLXr9+PXAARVHkBIiiqMDAwLCwMIVCQQ7iIw1gIjMz083NTf8oQ+bT3NxsZmaWnZ09iq/CKAHMX2h7e7tIJLpz5w43Nj4+fufOnSzL+vn5nTx5khuemZlpbW090mW9ePFCLBbX19cPFcBkFzc1NQ368cjIyMzMzDdv3jg6Oo7oW2poaJg6depQLRP8ACZZ/unTJ/JjrqWlhfzCoyiqvb2d+81Hlp6amrpq1arVA+zt7cPDw8nr2NjYP37TrP5TbGxsbW3tSL4nAICRGWUA0zTd1taWkZEhFovlcnl7e3txcfGECRNm84wbN04ul5OJ1Wp1e3u7hYUFdzSkabqvr6+np0c3gIeKNN3h9+/fpyhKrVbrGaW78oPOPz4+fvr06dzbrKwsLy8vMzMzT0/PnJwcbrharU5MTHRwcLCystqwYUNvb+9Qa9vQ0LBixQp7e/tx48YFBQVVVVUplUoLC4tHjx6RCZRKpZ2dXU9Pz1CL05ozeatQKLZt2yYSiUgrenh4OLmWuXHjRm7Rzs7OT58+ZVn21q1b/FwsKioSCoWjaGxftWrV8uXLSQBzH+cHMOlSp9vmv2/fPqlUevz4cZZljx07FhIS0tXVxZ9Az8+X9+/fk8sTg9Jtgn779q1UKh02gFUqFVnPefPm8Zua1Wq1UCjUaDRkA7nJAAD+ImNqgv7j5MbExCQvL49l2fLy8mXLlvHHuri48Lve1NbWurq6ajVBy+Vyrl2aC+DKykoPDw+STHy6B+u0tDQXFxf9o3QNetDPzs4eN24ceX3w4EE3N7eqqiq1Wn379m3SiktGxcfH+/v7NzY2dnR0zJ07d9u2bUNFiL+//7Zt23p6evr6+pYtWxYcHPzH9q5cuTI+Pp5M8MdZ45IlS/QsbqgA1h114sQJOzs7EhgvXrywt7cftIF39+7dfn5+g34n+n348CEnJ4cE8IoVK8gF3YCAAIqiZDIZudDr6+vLb0JQKBRxcXGTJ0/Oy8szNzfPysr6I6Q3b97s5+dXUVHBTTbUviZntBRFDdUJSzeAq6uryR+Y/gBes2ZNSEhIUFCQQCCYNm0a6RUYGBh448YNExMTuVx+4sSJWbNmjeJbAgAYkdEHcENDg1AoFAgEYrG4rKysoqLC1tY2nEcsFvNPQNPS0tavX0/O/LgOz3K5PCQkhGGY0V0Dtre3T0tL0z9K/3w45IxZqVT29fWZm5vzu8L++uuvQUFBJFRMTU25q4bV1dUxMTFDBXBtbW1fXx95fefOHdI/vKCgwMHBgaRjbGzslStX9CzO8AAmWfX48WOWZZOSkn744Qfdra6rq5NIJPyz+ZEqKiri76Pq6mqKorjfEwTDMDU1NQcPHrSzs4uOjib5d+fOHX9/f/LHcOLECQsLi6ioKLIhenz+/FnPn4S3tzdpX+Gv3tSpU4cNYPLlz58//+zZs1VVVdwJPcMwMpmspqYmKioqOTl5tF8SAIChRh/AiYmJU6dOFYvFFy9eLCgoKCkpiYyMrOKxt7fn2hvb2tocHByePXtGYoyiKK7TEMMwVVVVjx49GvbyJEkd8QBzc3MfH5+MjAxyPNUzaqj5aEXmxYsXyRlwVVUVRVEfP37kRt29e9fU1FSj0VRWVlIUxd05qmduLMvW19fHxMS4uLj8cf5nampKUVRvb29/f79EIikrK+vt7R0/frxCodCzOMMDmGXZadOmka7I3t7ed+/e1VqZt2/fOjk58ZupR6qwsDAyMpKfiDdu3BAKhR4eHvzJ+vv7Fy1atHjxYq2OxPx2b7lcfuPGjWGXqD+AdR0+fPi7774bNoDJLvby8qJpWigU8k++o6Ojjxw5Mm7cuMbGRsOXCwAwOqMMYIVCYWtrW1RUxF0FbG1tvTpg7dq18fHx5LVSqSRjV69effDgQfJapVKlp6efPXu2urqaDJk/f76np+fly5f1L1TP9UI9o0R/4hY31DXg0NBQlmVfvXpFURT/0umtW7fI1UFyzqfV8jno3NRqtZub2+LFi2tqatRqdUlJCZedMTEx27Zty83NJS32ehb3+PFj/pyLi4v1BPDhw4fd3NzevXtnZWWldeX7yZMnUqk0ISFhdB2PaZo+ePDgvHnztO7zSUxMXLdunVQqJb+rtPT29l65ckWj0XR0dGzatGkUD+IYaQCvWLEiPT3dkAAOCwtzcnKaPn26QCCIjIycN2/e7NmzWZbNyMiQSCRxcXEjXVUAgFEYZQCnpaUtXryYuw3p2bNn4eHhpO+Vm5ubt7c3eR0REUEuZ9I0rXX0nzNnjlZz6LDxMLoANmRiuVxuaWl55swZcg5naWlZUFDAjd23b19gYCD52WFmZlZUVESGV1ZWLlmyZNBFv3z5kqKohoYG8vbo0aNcdl69etXBwWHx4sW5ubn6F0eymTs5TklJ4WZSXl5OURS/Dba2tpaiqDVr1qxatYq/JgUFBdymjU5SUlJISEhvby+/FzRN087OzoWFhfHx8VpLrKqqqq+v557aoVAogoKCYmJiuAn4d0zpYUgAX7p0ibTzKxQKS0tL0m952ADmiMXi/gHV1dVyubyoqIiiqOfPn4/9LikAgGGNvgmaHJG5+4DJNV2FQuHp6RkaGkp64TIDyBEwMDAwNDQ07E82NjYeHh7c25CQEO5hDoZ3wjJklP6JVSrVo0ePAgICIiIiuF6vSUlJXK+ooqIiKysrLnQ3b94cGBjY1NTU1tY2a9asn376adBFt7e3m5qapqSkqNXq0tJS8jAKskW9vb2SAdxJ4VCLo2l6woQJhw8fJmFMbt8iAdzS0iIUCnNycrhvmGVZLy8viqK4RzuxLJuenm5ra/vgwQOD9+og+vv7SdLzA/jEiRM+Pj4ajaapqcnc3Jz7fliWnTp16sGDB+VyObkpiDxCy8bGhgSbUqn09fUtLi4mo/R0who2gJVKpUAgIOuWlZVFurlpBfC5c+euXr2am5vL7aOnT58ePXo0MTExLi5OKBQuXbp0/fr1qamp+fn5tra2kZGR0dHR5Bbhe/fujeV7AwDQ7+s8iINob28PDw8/efJkY2Ojl5cX/85UXQsWLLhy5cqgowy/DcmQUUNNzDVNOzs7JyYm8ttIaZret2+fvb29RCIJDQ19+PAhN6q/v/+HH36wtra2srLasmWLUqnUmptIJCKXRa9fv+7u7m5ubr5o0SJywvrhwwcykxUDDFncgwcPPD09XVxcYmNjCwsLuQBmWfbAgQOWlpZSqbSuro4M2bNnz7hx4/idmyiKEggEov80bO+noXABfP/+fYlEwq1ncnLyxIkTyYMhb9y4IZVKe3p6tP42uF0zc+bMNWvW2NnZken17Limpib9AVxfX29lZUV+9k2aNCk7O1uj0fT397969crMzIxs/po1a+Li4jZs2MAtJScnZ9myZb/99lt5ebmpqSk5A96/f79EIsnOzqZpOjw8fMeOHcuXLyd3TwEA/EXG+ixo8szn169fJyQk2NvbZ2RkkFF1dXVTpkzx9/cnXXN16Qng/3kxMTHXrl0z9lqMGNnd2dnZEonk9OnT3HCNRjN37lwvL6/W1tZp06YdOnSInOibmJhwnQCI7u5uiUTS1ta2cuXKX3/9Vf/ilEqlSCT68OEDPUA9QDWAdFb/9ddfp0yZ8seU33///fTp00ljgJub27hx4/bu3UueuUEaqBmGSU1N1VoZlmWFQuGhQ4ccHR09PT1Jmw3ZzODgYIlEcuDAga/35QEAaBtTAPf29p45c0aj0Xz58mX//v2fP3/mj9VoNCUlJT09PTdu3AgKCgr/TxMnTiSP4eXMmDFj2rRpoz4/+6/Q19d3584dZ2dnA6+DflPIZV1/f3/u+d4chUIRFRWVlpaWl5fHtSdv3LhxwoQJDjyWlpaku5OBDwNJSUkxNzenhiASiU6dOsWy7MePH7nWhba2NgP/4weGYby9vbdt25aVlaXVbU2lUm3fvp3c4A4A8Bf5O/4/YPRn4VhbWzs4OOjeJgQAAP80f0cAAwAAgBYEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYwdcJYI1GU1VVNaLpOzs79U9w8+bNnp4e/sC+vj7dKbmBNE1rNBqGYbTmk5OT09/fb/i6wVhoNBpjrwIAwH+HrxPAd+/elUgklZWVBk5fX19PURRN00NNoNFoKIqqqanhhty7d8/W1lYrkh89erRw4ULyWiwWBwQETB1AURR/Ph0dHaPaLBixFStW5OTkfK25MQyzevXqQX94AQD8t/tqTdAJCQn29vafPn0yZOJPnz6JRCL905iamjY0NHBvZ82a5ePjEx8fz59Go9GEh4enp6eTAFYoFGQ4RVEajaa+vp5hGBMTk2GP4GVlZRRFiQaYmZm5u7sfOXKEnMzpGTWo+vr6hQsXSiQSqVS6bt06uVzOH1tTU7Nw4UILCwtra+uYmJjW1latRYhEookTJ27ZsoXblqE8ffo0LCxs3LhxDg4OBw4cMOTUkyxo2DmT5oRhpxnUrVu3zMzMSkpKyFuRSOTj4+P/Jz8/P+63EeHo6Oju7u49wNbW9tixY1ozFAqF+lf4H7LvAOB/zygDWDNAa0h8fHx1dTV/IHcc12oZbmlpEYvFWvPUmkYsFjc2NpLXeXl5AQEBSqVy9uzZJG45TU1NhYWFZPqurq4rV66oVCqKorq6uiiKUqlUYrF42CZochglreI0TT9+/NjBwSE1NVX/KF3Nzc0TJ07cuXNnZ2enXC7fsGGDr68vt/SGhgYbG5v9+/d3d3c3NzdHR0f7+vqqVCr+IkgMhISExMTE6Fnhuro6c3Pzo0eP9vT0VFVVTZw4cahV0t1MQ+JBKBTqv0agR3p6OrcyIpGIP5/+/n6tAPb09OT28o4dO7KysshfQkJCglKpJLtV/+77h+w7APjfM8oAzsjIMDMzkw4QiURSHolEMm7cOKlUamVlZW5uTk4dpFKpA49IJKIoSiwWc0Ps7e2lUqlCoSgpKQkPD4+MjBQKhWFhYeHh4Tk5OVKp9MWLFyzLKhSK8PDw77//vmNAYmIit0pisVgul1MU1dPTQ1GUUqkUCASGHMG1jtREZmamm5ub/lG64uLiIiMjubc0TTs5OXG/GFasWLFo0SJubE9Pzx/f1+XLl3UXcePGDVNTUz2noTExMdHR0dzbvLy806dP699GwwNYd31GzcTEhN/+rxvA7u7u/ADOzMwkrymKIu0WIwpg4n9y3wHA/56xNkEzDGNnZ/f582duyNKlS7ds2aLnI3fu3BGLxSYmJi4uLhUVFbozZBjmxo0bFEU1NjZ++PBBJpOlpKRwE6jV6t27d7u4uDQ1NU2fPp07RJImaIFAoFaryQVm0srNP4IPFS26w+/fv09RlFqt1jNKayY0TUskksuXL/MHHjhwICgoiGVZpVJpamqan5/PH5udnf3w4UPdReTl5VlZWTEMExoaumfPHm74li1bDh8+TNO0mZmZgZdaFQrF2rVrra2tAwICsrKy+AF8+fJlPz8/MzOzSZMmcV/jtm3byM8jkUgUHh5uyCKI1tbWEydOnB7Axc+wATx79mx3d3eKokgrdHZ2NhkuEonITLjd90/bd2TOz5498/LyWrt2LRk46C4j/ygSExMdHBysrKw2bNjQ29s77PwBwOi+wjXgNWvWcCcuLMtOnDjxwoULQ02sUChIoIrF4ry8vMDAwEHPFRYsWEBRVHh4uJeX1+bNm+fNmzdz5szwASEhIZWVleT0qLm5ed++feTISAKYHLiHCuDKykoPDw+tnlyDHsTT0tJcXFz0j9JSW1tLUdS7d+/4A3Nzcy0sLFiWff36NUVR/Kvagy6dYZiamho/P7+tW7eSZU2ePJlMxjCMg4PDu3fv6urqKIqqrKzcuXOnVCq1s7NLSkoa6jri5s2bQ0ND29vbGxsbvb29uQBOS0uTyWRlZWVKpbKiosLV1fXMmTNDfRuGaGtrO3ny5JkzZyiK4r5wU1NT/pVU3QAmHQIoitK6AKEbwP+0fUfmvGTJkoqKCvLl6Nll8fHx/v7+jY2NHR0dc+fO3bZtm+4MAeBb8xUCuKioKDg4mLx+8eKFSCQaqisWwzBLly6Njo7mrgGvWLHip59+0pqsoaFBKBRSFPXH4cbf37+rq0ulUjU1NT179oxM0NbWxp+enGcYEsBD0b1YaG9vn5aWpn+UlvLycoqivnz5wh/48OFDcin62bNnumP5SxcPMDExoShq+/btZJ2bmpqEQuHLly/JpVl/f39uQbGxsWlpaT09PSUlJVZWVvxGAk5fX5+pqemdO3fI27Nnz5IAVqlUlpaWd+/e5aa8dOmSl5eX7rcxCloB7O/vP/VPXl5e/AAmEdva2ioUCrVmohvAQ/lf3XdkzhcvXiRv9ewyhUJhamp68+ZNMry6ulr/RWgA+EZ8hQDWaDSTJ08mHV8TEhKG+sfPMMyPP/7o5eXV3d3NBXB3d7eXl1dycjJ/yh9//HH27NlisfjRo0enT58OCQnJy8s7c+ZMSEgIOdxIJJL6+noy8bt37zIyMsiRurOz09TUlGTAKAKYHEbNzc19fHwyMjLIaYeeUVrev39PUdSbN2/4AwsKCsiF8MbGxj/O6V+/fj3U0klOaDQaR0fH3377jRs7Y8aMvXv3kkukBw8eZFn2zZs3f+To+vXruWlSU1MdHBx051xTU0NR1MePH8nb0tJSEsBVVVXcRnG4K5dfK4AZhvnjHK6pqYkbpXUGHBwcHBAQ4O/vLxAISEKLRCJygj7SAP7f23dkzty3p2eXVVZWUhRl4A0IAPDt+Dq3IV25ciUgIKChocHKymrQu4HVavX69eudnZ1JOx6/F3Rzc7OHh0dcXBw58srlcgsLi9LSUq4XdGpqalRUVHd3t5mZ2du3b8+dOxcaGsrN+fz58+Xl5SzLCgSCly9fkmMZiRlyM9LoOmEZMoq7+YT0/VapVBKJJDc3lz9NUlLS9OnTyRmYVCrVGnvy5MnCwkKtRezZs8fX15c/jaenJ8uybm5udXV1pAeQSCTiN/vfu3dv0PuqyVG7paWFvOUC+NWrV0O1qX6tAO7s7KRpOjk5mR/AigFa09fU1Njb23OfJRMIhUJypXYUnbAMGfXt7zutOevZZdXV1fy9DAD/Lb7afcALFiwYP358UlKS7qi6urqpU6e6ubmdO3dOKpU6Ozs7OjpSFOXi4uLk5GRjY/P8+fN58+Y5OTnV1tb+/PPPc+fO5d+G1NbWNm7cuM+fP69cuTIpKWnmzJnnz5/nZh4XF9fX10fTdFxcXH5+/sKFC5ubm/v7+xUKRXR09ChuQzJ8lK4NGzaQQzahVqtdXV3JrTV/vN20aRO/W5NCoRg/fvzVq1d1b2UhlwnJW9JCe+nSJf6RPTIyklxoJI4dO+bs7Ky7Pj09Paampvfv3ydvMzMzScL19fVZWlryuwLV1tZyAUOaSbXugjUc6Yg+Y8YMhUJB0/SUKVNIn4Dz588HBATo3pNdUFDAfWlcAFMURXoS/UUBrOtb23dac9azyxQKhZmZWVFRERleWVm5ZMkSQzYZAIzr6wRwW1tbeHi4SCRKSEjQ7VFy7969pUuX8o+Dg94HXFxcTK4ik+Zl/n3AGzduLCoqevny5fHjxx0cHFQqFfep+fPnc69Xr149bdo0Ly8vfs/b0XXCMmSUrk+fPtnY2Ozataunp6e1tXXVqlUhISHcyU1TU5NUKt2/f39vb++nT58WLVoUEhKi0Wh0FzFjxgz+I0ciIiJsbW0PHDjADXny5IlYLM7Ozu7r6ysqKrK2tub642hZvXp1WFiYXC6vra0NDg7mEu6XX35xdHQsLS1Vq9WvX7/28fHh7kZtaWkRCoU5OTmkR7ohG85HUVRCQgJZn8OHD8tkMhKlCoXC29t79erVWtNHRETw7z5SKBQMw6Snp5O9PIpOWIaM0vWt7TvdOevZZZs3bw4MDGxqampra5s1a5ZuvwoA+AaNNYD7+vpOnDghlUpXrlz56dOnoKCg0NBQ3ZuLtDQ3N5OLtXpoPQmLWLlyJf+pBW/evOHu0KisrJw8eXJXV1dQUNDMmTPJYxxGfRuSIaMGVVNTM2/ePAsLC6lU+v3332t9sLa2loy1sbHZsGEDGau7CNJUwP3OIGeu/Adzkru5AgICzMzMvL29te6f4evo6Fi4cKGZmZm/v39RUREXwBqNJiUlRSaTmZqaenp68hsVyB04lpaWUqmUNJyOCEVRERERDMOUlZVJJBJyAzfx/v17Gxsb7l4j0rPXw8ODu21G9zblUdyGZMioQX1T+053znp2WX9//w8//GBtbW1lZbVlyxbujx8AvmWjDODW1taMjIx169ZZWlra2dnx+2ru379/3Lhx06ZNO3jwYH5+/qB3GTU2NpKnZAyF9N+pra0lbc6z/ySRSEJDQ2fPnh0WFpabm5ucnEz6vNTV1U2ePPnBgwfkBM7Z2fn06dNyufz58+cSiWQUp3EwOt3d3RKJpK6urqqqavz48Vr3zv7xuyorK2vChAmdnZ1tbW3ff/+9vb09yfi3b9++ePFCIBBw4aFQKNra2szNzUf9XEwAgG/ZKAP4y5cvTk5OS5Ysyc7O1v25LZfL09LSli5dyu/tydfa2hoXF6f/P2PIycnRf+7CMMy0adPu37+vUChmzZpVUFDAjXr79q1Kpaqrq5NKpb/++uvItw9Gr7W19dWrV3Z2drrpS/ZaSEhISkoKTdNpaWnclebExEQnJyd+f/jFixeLRKJdu3b9jesOAPD3+e/+/4Cbm5sN+a8F4G9G07RWoytfZ2enIW0SnZ2deKITAPwP++8OYAAAgP9SCGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMIKvE8D9/f1xcXH9/f36J6Np2sAZ9vX1qVQq/hC1Wp2UlKRUKsc4Z/i6NBqNgVPSNH3z5k2t3QoA8I/1dQJYpVJRFDVsAJubmzMMQ14zDDNz5synT58OOuWxY8dmzZrFH6JUKimK6uvr052YpmmKolpbW8nbkpKSdevWjXZTYBBKpdLb21v318/9+/e9vb1v375tyEx6e3spiuro6Phr1hEA4L/M6AM4MTHR399/6p8oiprK4+vre+jQIa2P2Nracq+fPn06btw4uVxO/4kb1dvbO3HixMLCQv5nGYahKGqoM12RSNTZ2Uleb968+eeffx7p5jQ1Na1evVoqlZqbm0+fPr2srIwMLysroyiKm7mW2NhYiqIaGhr4E0+fPp2bgAxRKBTDrsBIT+L1r9jXRX7ikDVkGKahoSE9PT00NFQqlaakpKjVam5KiqK8vb3J30NtbS1/JhqNZqifUHpkZGQIBAI9m5mbm+vn5ycWi11dXVNTU7lfeCzLvn37Njo62sLCws7Obu3atV++fBnhdgMA/IVGH8D8Ix058mpFCDcBN9zBwYF7u2HDBpFIFDXAbwD3weTk5AULFrAsW1NTw7Ksr69v8ACKosiLoKAgX1/fjx8/cnMWi8UKhYKmaaVSKZVKk5OTi3iGbSbVaDTe3t6LFy/+/Plzb2/v8ePHJRJJVVWV/pyjadra2trKyur48eNkCJl4/PjxWvk9bAA/ffpUKBSOKE3/ngAuKSkJDAwMCwujKCosLCwoKCgzMzMmJiY6OnrQ7eJyVzeAycBhm0k4NE0fPHjQ2tpaz2bm5+dbWloWFhb29fU9fPhQKpXu27ePjFKpVE5OTlu3bu3q6mpvb4+Ojo6MjBz5FwAA8FcZUxM0P4O1Apg/KikpSTZAIBC4urrGx8c3NTWNHz/e3t6ehNzatWv37t1LJm5qapo4ceKHDx9u3LhhZmbW0dHBzYq/CDJQJpNNmjTJ2dmZoihXV1cfH5+LFy9Onjz5Fx5DDvqvX7+mKOrjx4/ckB07dmRkZOjPueLiYh8fnw0bNkRERJAhZOKDBw/Onz+fP2TYAB5Fmv6dZ8CkjUHrRxVFUeQ1//cNP4ALCgo8PDz8/Pz8/0RRlJ+fn6enZ35+vv7FNTU1BQQEBAYGFhYW6tlMPz+/kydPcm8zMzOtra3J68rKSoqiuLPeu3fvikQi9BUAgG/HmAJ448aNAQEBuk3Qvr6+v/32m9bEFy9eFIvF5PXatWtTB8TExLx8+dLa2rqpqYkc38PDw93c3BYuXGhra7tz507+HIZqgk5NTeVCLiAgIDc39/Hjx/xPcQE8VGi9e/eOoqjLly/rzlxPzm3btm3Xrl3Xrl3jGsDJxM3NzXZ2dtXV1boBfPnyZT8/PzMzs0mTJqWnp3PzEYlEFEWJRKLw8HDdFZBIJE+ePPH395dIJD/88AP5ErgV01pD/hLv3r0bGBgoFovt7e23b9/Obys2kFwuDwgIIGfAgYGBvr6+DMPU1NRcu3btj3iLiYmZPn16UlIS/9s25AyYBLme7/bp06cJCQl9fX36f2fcunWL/OUQRUVFQqGQfD/Nzc0ikej69etk1J49e9zc3MjrsX8tAABj99VuQ9JzgZZYtWqViYlJcXGxSqVKTExUq9X9/f2enp4ODg5HjhzhJsvNzS0vL09OTnZ1de3t7WVZ9rfffgsKCgoLCxOLxWEDgoODN27cyH2EtE5nZ2dfu3bNz8/vzZs3YrG4paWFWzEugCsrKz08PHp6erTWjQS/UChcvHhxVlYW/1RYTwDIZLLS0tLu7m4TE5NLly7xJz58+HBsbKxWHKalpclksrKyMqVSWVFR4erqeubMmWGXUlZWJhaLY2Ji2tra6urqXFxcyNc1bAC3tbWZmppmZGQolcpXr175+Pj88ssvBuzJwZEzYHK+u2PHjqysrEF7VGldA87Ly+P/rNFqjRhqd2htvuEn+rt37+Zfyzhw4IBEItm9e/fSpUudnZ1Jj7+v+7UAAIzaKAP49OnTAQEBwX8KCAgQCoVTpkwJ5vH19X306BGZXqVS2dvbm5ubOzk5cYdguVw+bdo0oVDInaYQ3d3dEyZMKCoqMmRNGhoarK2tRSKRRCJ59OhRbW1t/ACu7dHA646dnZ07duyQyWTUgMjISBLhQwXA69evra2tyW+O8PBwftx2dnZ2d3dLpdL3799zcahSqSwtLe/evcvN4dKlS15eXuS1/gCmKIq01ZMUJ58aNoBramooiiopKSHDOzo6DL/+yklJSQkNDZ05cyZFUTNnzgwJCSE/NfhN0HxaZ8CpqakODg5cx6sRXQPmb44hAVxXVyeRSHJycrghjx8/9vLykkqlAoEgKiqqoqKCdCwY+9cCADB2X+EMOCcnx9/f/9mzZ/7+/mRIXV1daWmp1jRLly51cHBYuXLliRMnGIa5du2ao6Pjrl27ysvL7e3tY2NjS0tLyY0umzdvXrt2rYFL37p167Zt28Ri8a5du6Kiorq6usaPH19aWiqVSsncRnrQf/fu3cGDByUSybx58/QEwKFDh2JiYsjr1NRUKysrtVrNn3j37t0bN27k4rCqqoqiKPF/MjU11WpP1l0frVHFxcWklXXYANZoNAsXLhQKhUFBQZs2bbpy5cqor4AWFBQIBIKNGzcyA7gAfv78eVpa2ooVK7gGCa0AViqVzs7OycnJ3Ni/KIDfvn3r5OTEbxc5dOiQTCa7d+8ewzBNTU2JiYl/fONnzpz5il8LAMBYjCmAST9VoVD4+vVrlmUXLVqUn59///59W1tbrjMqERIScvPmTQcHh5cvX06dOlUmk02bNu3BgwdkrFwu37lzp6Oj47lz58gl1b1798bHx0dGRr569Yq0f3IXm0nzJjlofvnyxdzcvK6uTiwWt7W1xcfHHzp0KD4+/sOHD66urhcvXjTwoK9Wq7u6uvhDsrKySDoOFQCk3ZuvuLiYP3FbW5u1tXVeXh6Jw1evXvFvWNLC/6DoT/yryNwK3Lt3TywWMwzDDX/8+LFWQvOvOldUVBw9enTZsmUmJiaG/6zRsmLFCqFQ6OLismPHjvr6+l27dkVERFAU9d133/3+++81NTVcPyzda8Dnz5+3trYmq/cXBfCTJ0+kUmlCQgLXR6ypqUkgEHANMMThw4ctLS3JNF/lawEAGItRBrBSqbx8+bKPj09ISAh3VH3z5s3EAXl5efyJS0pKZDIZTdPkNqTu7u779++LxeKgoCCuvZq0ZzIMc/bs2fT09Nu3b9fW1nIHa5FIxO9IzAXw5s2bFy9ezN2GpFKppFKpv7//+vXr165dO3PmTAMP+rt27Vq+fDl/yPXr1y0tLYcKgNbWVolEQi5REx4eHtu2bdOaOD4+nnw/CoWir6/P0tKS30BaW1ubm5tLXpeXl1MUJZfLddeNzPP58+fk7bFjx7y9vfkrRqKdu26dkpJCltjY2Pjw4UNuPtnZ2SYmJqM42ystLXVwcBCJRDU1NRMnTiwqKiosLGxtbTWkCZpcM+ZuyvorArigoMDS0pK7mk6Qbu1v377lD8zPzzczM2toaPgqXwsAwBiNJoAZhgkODnZ1dc3MzCTPx+jv72cYRi6Xp6enT5s2ra2tjT99cHBwVlYWdx8wIRaL+cdi3aP5+/fvs7KyyJXgQQP42bNnpqam5ChPApikO5mmu7ubXDc1pBNWW1ubq6trQkLC58+flUrlkydP3N3dd+3aNVQAnDlzZuHChfwhe/fuJR2s+BN/+PCBdG8m6/bLL784OjqWlpaq1erXr1/7+PikpqaSKVtaWoRCYU5ODtfGyyHznDVrVlNTU319vaur66lTp/grRtP0hAkTDh8+zLLsq1evyK8ZhUJRUVFhaWmZl5enUCjkcvn69eu5S86Ge/PmjUwmKykpIZ2wuN8cWteAP3z4wO2aoR7E8bU6YfE/lZ6ebmtryzWl8M2dOzc0NPTp06e9vb09PT23b9+WyWQJCQlf5WsBABi7UZ4Bf/z4UavVcd68eaS/6+bNm2UyGf8Zk+Xl5eQJwIYE8O7du2fMmBESEvLTTz/dv3+ffHDQAFYoFFxXGi6AdRlyGxLLsp8+fVq/fr2Dg4NYLPb09Dx69Cj/6qyIx8PDIzo6mvyk4Lx584b0xNaa/9q1a7kA1mg0KSkpMpnM1NTU09Pz/Pnz/DkcOHDA0tJSKpXW1dXxh5MVKCgocHNzk0qlP//8s+5l4wcPHnh6erq4uMTGxpIbZ8kSr1+/HhAQIBaLrayslixZ8v79e717dRCrV6++c+cOvxc0oRXA9vb25HaghIQE0v2NezHUvtC/O44cOcJ94dz3b2dnp/UpiqIEAoHoP5FtV6lUJ0+enDp1qpWVlUQimTp16qlTp8gf7di/FgCAsRtrJyyFQkFRlI+PD+liSqSlpZmbm8+aNUvr0DZhwgTutUgkCgwM1GqCZlm2sLCwvLxcaykCgWDatGn8ibXaDPmPouTU1NSUlpZyHZ3+S/3ND9wYlEajEQgE/CEMw5iYmJCoa2lpcXFx0fNxhmGqqqqKi4v5DwMHAPiHG2sAK5XKuLg43ftBm5qajhw5opV8EomEvCAN1/xQGfSCIn9i/vVRrQDW+s8YOFu2bHFycuKaef9LfQsB3N/fT1GU1gMrfvrpJwcHB5lMNmHChPXr1+ufw5w5c2QyGWk8BwCAv/v/A37y5An3ekSdcYaduLOz83/11OpbCGCapnG7DgDA1/W3BjAAAAAQCGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMAIEMAAAgBEggAEAAIwAAQwAAGAECGAAAAAjQAADAAAYAQIYAADACBDAAAAARoAABgAAMIIxBbBKpUpNTWUYxpCJ6QGDjtJoNEONMoRGozF8Yj3rMOoVMERPT8+ZM2eGWrpSqRx0eFdXV3R0tEKhMGQRRUVFBQUFY1tNAAD4m4wpgBUKhUAgIK87OjpMTU3DecaNG8efeO/evRMmTHAYjJ2d3Zo1a0a06IaGhtzcXJJn4eHhjx49MuRTDMNQFFVdXR0REfH+/Xv+qBUrVuTk5IxoHfQvaPXq1X19fdyQ9PT0SZMmqVQqbsilS5fy8vLS09M3bNjg7e096C+A9vZ2iqJ6enoMWeipU6dMTEz2798/6FiapimKcnBwcHR0dHZ2dnR0pCjK5U9OTk4URY1qWwEAYDTGFMBqtdrU1JS87uvrc3Bw4I+1sbEZ27rpk5SUNHnyZPL66NGjGzduNPCDAoHg48ePGzZscHNza21t5YbfunXLzMyspKSEvBWJRD4+Pv5/8vPz08onR0dHd3d37wG2trbHjh3TWpBQKFQoFJ8+fQoNDZ01a5aVlZWXl9fsAdOnT8/JyaEoKjo6+scffzx58uTbt28HXdvOzk6Kovr7+/VskVAo5K8qn4+Pj0QiIZNpNBqKojo7O8nbz58/i8VirQXpWQoAAHxdYwpgmqa5gzjDMNbW1uk89vb2X2klBzF58uQjR46Q1y0tLRMnTuzo6OBPwDDMoOeUIpGoqamJpunvvvuurKxMo9FwTejp6empqancZFxWsSzb39+vlU+enp6NjY3k9Y4dO7KysshCExISSHuyWCzmgvPKlSs//PBDSUnJxYsX+WvCnyE5m29oaLCxsXFycuKfmDo7O5O3jo6ONjY2TU1N/A8KhUL+qvK1t7dzAUzO/hHAAADfiFEGcElJSUhIyMyZMwUCQVhY2Pbt2zUaja2tbRHPxIkTv/ba/ltZWZmVlVV3dzc3ZMeOHVu3buVP8/z5c5lM5q1DKBR6eHiQ115eXq6urnV1dbqLMDEx4Se6bgC7u7vzAzgzM5O8piiKtDzzAzgwMDA4OHjSpEn29vZRUVHh4eE0TQsEgmXLli1dulQoFC5evHjFihW6q2HIGbBAIDAkgMm6IYABAL4RowxgctbInQEzDKNQKPhN0DRNc03QHz9+tLGxcXR0dOGxs7Pjv3V2dra1tb106RLJV35UaKFpOjg4+OjRo/yBHR0dzs7ORUVFw665VCptaGjgD2ltbT1x4sTpAVwnqWEDePbs2e7u7hRFkSzPzs4mw0UiEZkJP4DJufjx48ejo6OLi4szMzOfP39ubm6u1Yqgy8AA9vLy0v2p4e3t7enpqRXA3Lk1rgEDABjXV2uC7unpCftPkZGRej5LUVR7e7vWQJLrlZWVHh4eQ/U82rp165QpU0jINTY2cu3Mz549s7a2Li4u5q+e1sw1Go1MJquqquIPb2trO3ny5JkzZ/hRZ2pqKpfLuWl0A5hl2U+fPlEUpdUJXDeA4+PjHR0dZTLZ5MmTAwICcnJyXrx4cfPmzaCgIHIdnWuLZhhGa50HDWCtaSiK4jcG8HV0dLi7u3NvBQIB953jDBgAwLjGGsCmpqaZmZmG3/2ye/fux48fcwHc2tr622+/Gb64uLg4Gxub+vp6MsTLyys5OZmb4Nq1a5aWlrt27VIqlb29vS4uLl4DRCKRt7e3m5vb77//Hh4ePtTaagWwv7//1D95eXnx84lEYGtrq1Ao1JqJbgBXVFSQVu4jR47ExMSQ5nFXV9ebN2+yLNvb20tRFPnIu3fvpFIpd5Lq4uJibm5Oui5zQxwdHaVS6cePH/mrbWA3aaFQiAAGAPhGjDKAaZq+f//+pk2bRCJRYWFhcXHxjBkzSBdfExOT2X8KCwsrLCzkPlVdXS0UCl+9esUFcGVlpVgsNvD+n127do0fP547fy0qKpJKpVp9r2pqalatWvXlyxduiEKh4EfLjz/+uGPHjkHnzwUw6a/E7+ukdQYcHBwcEBDg7+8vEAhIQotEInK37qBN0MTr169LS0vlcrm/vz/XZE2u1A66PnV1dWKxmKKovXv36vlaKIoy8EbhP3YWmqABAL4RowzggoICBweH7Oxs7iyqqamJnOcNdUWTYZjw8HByCshvgs7MzJRIJG/evBl2oQqFgn+7TmBg4OnTpw35FD9aSktLJ0+ePOjDQ0gAd3Z20jSdnJzMD2DFAK3pa2pquJ7eXAoKhUK1Wq0VwAqFInxoDx480F0ZtVodFBQUFxdHUZStrS351TIosmixWOzp6al1DZh/4q5UKvmn+DgDBgAwrlEGsFqtVigU/GvASUlJ5GZc/mGdn3OpqakTJkzgzk3514DXrl3r4+Mz1NOgBnX58uWgoCByAVilUu3cuXOo80itANZoNJMmTeKfl3NIW+6MGTPIpk2ZMuXChQssy54/fz4gIID/VA2ioKBg+vTp3GdJAFMU1dvbqxXAnZ2dQ/0uWbZs2ZUrV7QGKpXK5cuXz549mzyIo7Cw0N7eftDfKB0dHWKxmGEYsVis+w3wT9ybm5stLS25UQhgAADj+mqdsCIjI3ft2kWCh5zYhYSEcGeoFy5csLCwePbsGfdZfgD39PTIZLKffvqJvNXfCYtkqqura3V1NXnLMExERMRQz9IiAdzQ0JCVlbV8+fI9e/bcvHnT0dFRLpd3d3evWLGCO7WlKCohIeHMmTMsyx4+fFgmk5EoVSgU3t7eq1ev1ppzREQE/+4jhULBMEx6ejp53JVWAAsEgkFPf21tbbUCuLq6esqUKbNnz+7t7eU6YeXn50+YMCE1NZWcXnPKyso8PDzI4vQHcFFRUWhoKDdKfwC/f/8+NjZ23bp1bW1tQ+0FAAAYi68TwK2trWKx2MHBoaenR/dULyMjQyqVlpaW8gdq9YJ++vSpiYlJTU3NsLchsQMdoUnYMwzz+fPn0tLSffv2URTFvw2poaHh4sWLu3fvXrhwoa2t7apVqy5evMidf2/cuDEkJKSxsZGiqM+fP3OrFBERwTBMWVmZRCJ58eIFN7f379/b2NjwL9ympaV5eHiQhB70QuwozoBramo2bNhgYmKSkJBAUpzfC/rly5chISETJ06Mj4/nemjHxMQkJSUZEsDbtm0jUxJaAdzR0cEP4JUrV969e/fly5fr1q0bai8AAMBYjCmAu7u7raysWJb97rvvNm7cmJWVNWXKFJFI9OnTp+7ubu5umfb2dv6tt01NTRUVFQKBgEsvora21pCFnjhxQiAQREREeHp6Ojs7z5gx4/vvv09NTd2yZYurqyuXgtnZ2W5ubjt27Hj8+LHuI7E0Gs3q1audnZ0piiIned3d3RKJpK6urqqqavz48fn5+VofycrKmjBhQmdnZ1tb2/fff29vb0+ueb99+/bFixcCgYBrQlcoFG1tbebm5tw3IJfLDTkDvn37dmRk5NOnT7mFyuVyfrQzDFNUVET6ZKlUqr1799rb25NfFSKRiHvAiO41YNL+zN8LHz58MDExIb+iKisrr169KpVKubGLFi368uVLV1dXVFSUITsFAABGavQBvHHjxgkTJqxZsyYrK2vy5MmkN/KrV682b95MHkFMUdSg/zdAXl7e+PHj+bcPjcjNmzcvXLhQXl6udYpM03RQUNDdu3e5t8PO6vfff/f19eWmbG1tffXqlZ2dnW76kvALCQlJSUmhaTotLY07B01MTHRycuJvzuLFi0UiETlHJ5qbmymKGvTRmINeA+a0t7dLpdKuri7dUTU1NT4+PpWVlVy3be5UnsOdAS9dunTLli38UfX19dwpb1hYmLu7O/8xmffu3QsccOvWraHWDQAAxmL0AVxXV1dZWanRaL58+aL1bCmCpunOzk7dvkt/HQP/Y0Q9aJomzeCD6uzsNGQRnZ2dWif3Bv4gGCl+ouufP7kxmj+kp6fnypUrY//GAABgdMbUBA0AAACjgwAGAAAwAgQwAACAESCAAQAAjAABDAAAYAQIYAAAACNAAAMAABgBAhgAAMAIEMAAAABGgAAGAAAwAgQwAACAESCAAQAAjAABDAAAYAQIYAAAACNAAAMAABgBAhgAAMAIEMAAAABGgAAGAAAwAgQwAACAESCAAQAAjAABDAAAYAQIYAAAACNAAAMAABgBAhgAAMAIEMAAAABGgAAGAAAwAgQwAACAESCAAQAAjAABDAAAYAQIYAAAACNAAAMAABgBAhgAAMAIEMAAAABGgAAGAAAwAgQwAACAESCAAQAAjAABDAAAYAQIYAAAACNAAAMAABgBAhgAAMAIEMAAAABGgAAGAAAwAgQwAACAESCAAQAAjAABDAAAYAQIYAAAACNAAAMAABgBAhgAAMAIEMAAAABGgAAGAAAwAgQwAACAESCAAQAAjAABDAAAYAQIYAAAACNAAAMAABgBAhgAAMAI/j/BrjxqBFIYNQAAAABJRU5ErkJggg=="
+    }
+  ],
+  "pages": [
+    {
+      "pageNumber": 1,
+      "blocks": [
+        {
+          "type": "text",
+          "text": "复杂文档解析对齐样例:混合版式",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "本样例用于验证 Rust 解析管线与 MinerU Python 输出在复杂版式下的一致性:双栏正文、项目符号、代码块、内嵌截图、合",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "并单元格、无线费率表以及跨页长表格都包含在内。",
+          "kind": "text"
+        },
+        {
+          "type": "heading",
+          "text": "1. 双栏正文与行内格式",
+          "level": 2,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "左栏:Rust 版本直接从 PDF 文本层读取行与坐标，再按版面",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "区域合并。对于文本稀疏的区域会回退到 Layout/OCR",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "管线。数值 2026、术语",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "MinerU、标点（逗号、分号；冒号:）都保留原文。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "右栏:Python 版本由 MinerU 4.2.3 导出 Markdown。两栏内",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "容在同一视觉行，但阅读顺序应先左后右；跨栏的标题和表格",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "不应被拆碎。",
+          "kind": "text"
+        },
+        {
+          "type": "heading",
+          "text": "1.1 列表与链接",
+          "level": 3,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "•",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "无序项一:检查标题层级。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "•",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "无序项二:检查表格列数。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "• •",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "子项 2.1:检查双栏顺序。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "•",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "子项 2.2:检查图片占位符。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "1",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "步骤甲:解析文本层。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "2",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "步骤乙:重建表格结构。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "参考链接:MinerU 文档 与 解析规范。",
+          "kind": "text"
+        }
+      ],
+      "tableCount": 0
+    },
+    {
+      "pageNumber": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "2. 代码块与截图",
+          "level": 2,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "下列代码块应保留为 fenced code block，截图应输出图片占位符并在 OCR 路径中识别其中文字。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "$ curl -X POST http://127.0.0.1:7860/api/parse \\",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "-F 'file=@sample.pdf' -F 'tier=basic'",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "{\"engine\": \"rust-mupdf-text-v0\", \"status\": \"ok\"}",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "图 1:模型控制台截图（含可识别文字）",
+          "kind": "text"
+        },
+        {
+          "type": "heading",
+          "text": "2.1 截图说明",
+          "level": 3,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "截图里的四行状态文字用于检查图片区域是否被版面模型识别，以及 OCR 文案是否出现在图片占位符附近。",
+          "kind": "text"
+        }
+      ],
+      "tableCount": 0
+    },
+    {
+      "pageNumber": 3,
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "3. 合并单元格表格",
+          "level": 2,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "表 1:任务进度（含合并单元格）",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "模块 负责人 状态 备注",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "版面检测 张三 完成 PP-DocLayoutV2",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "文本识别 李四 进行中 PP-OCRv6",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "结构还原 王五 待复核 SLANet-plus",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "合计",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "跨行备注 A",
+          "kind": "text"
+        },
+        {
+          "type": "heading",
+          "text": "4. 无线费率表",
+          "level": 2,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "方案一 | 基本责任",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "保险期间 20年",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "性别 男性 女性",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "交费期间 3年交 5年交 10年交 15年交 20年交 年龄",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "年龄 男3年 男5年 男10年 男15年 男20年 女3年 女5年 女10年 女15年 女20年",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "18 25.86 26.00 26.14 26.29 26.43 26.57 26.71 26.86 27.00 27.14",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "19 27.29 27.43 27.57 27.71 27.86 28.00 28.14 28.29 28.43 28.57",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "20 28.71 28.86 29.00 29.14 29.29 29.43 29.57 29.71 29.86 30.00",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "21 30.14 30.29 30.43 30.57 30.71 30.86 31.00 31.14 31.29 31.43",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "22 31.57 31.71 31.86 32.00 32.14 32.29 32.43 32.57 32.71 32.86",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "23 33.00 33.14 33.29 33.43 33.57 33.71 33.86 34.00 34.14 34.29",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "24 34.43 34.57 34.71 34.86 35.00 35.14 35.29 35.43 35.57 35.71",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "25 35.86 36.00 36.14 36.29 36.43 36.57 36.71 36.86 37.00 37.14",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "26 37.29 37.43 37.57 37.71 37.86 38.00 38.14 38.29 38.43 38.57",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "27 38.71 38.86 39.00 39.14 39.29 39.43 39.57 39.71 39.86 40.00",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "28 40.14 40.29 40.43 40.57 40.71 40.86 41.00 41.14 41.29 41.43",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "29 41.57 41.71 41.86 42.00 42.14 42.29 42.43 42.57 42.71 42.86",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "30 43.00 43.14 43.29 43.43 43.57 43.71 43.86 44.00 44.14 44.29",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "31 44.43 44.57 44.71 44.86 45.00 45.14 45.29 45.43 45.57 45.71",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "32 45.86 46.00 46.14 46.29 46.43 46.57 46.71 46.86 47.00 47.14",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "33 47.29 47.43 47.57 47.71 47.86 48.00 48.14 48.29 48.43 48.57",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "34 48.71 48.86 49.00 49.14 49.29 49.43 49.57 49.71 49.86 50.00",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "35 50.14 50.29 50.43 50.57 50.86 51.00 51.14 51.29",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "36 51.57 51.71 51.86 52.00 52.29 52.43 52.57 52.71",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "37 53.00 53.14 53.29 53.43 53.71 53.86 54.00 54.14",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "38 54.43 54.57 54.71 54.86 55.14 55.29 55.43 55.57",
+          "kind": "text"
+        }
+      ],
+      "tableCount": 2
+    },
+    {
+      "pageNumber": 4,
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "5. 跨页长表格",
+          "level": 2,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "下表故意跨越多页，表头由 ReportLab 自动重复；单元格内是长中文文本，用于验证续表行序与列对齐。",
+          "kind": "text"
+        }
+      ],
+      "tableCount": 0
+    },
+    {
+      "pageNumber": 5,
+      "blocks": [
+        {
+          "type": "text",
+          "text": "表 2:跨页回归检查项",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "编号 分组 检查项 结论 说明",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "1 版面 第01项:跨页单元格长文本检查 通过 第01行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "2 结构 第02项:跨页单元格长文本检查 通过 第02行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "3 版面 第03项:跨页单元格长文本检查 通过 第03行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "4 结构 第04项:跨页单元格长文本检查 通过 第04行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "5 版面 第05项:跨页单元格长文本检查 待复核 第05行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "6 结构 第06项:跨页单元格长文本检查 通过 第06行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "7 版面 第07项:跨页单元格长文本检查 通过 第07行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "8 结构 第08项:跨页单元格长文本检查 通过 第08行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "9 版面 第09项:跨页单元格长文本检查 通过 第09行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "10 结构 第10项:跨页单元格长文本检查 待复核 第10行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "11 版面 第11项:跨页单元格长文本检查 通过 第11行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "12 结构 第12项:跨页单元格长文本检查 通过 第12行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "13 版面 第13项:跨页单元格长文本检查 通过 第13行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "14 结构 第14项:跨页单元格长文本检查 通过 第14行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "15 版面 第15项:跨页单元格长文本检查 待复核 第15行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "16 结构 第16项:跨页单元格长文本检查 通过 第16行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "17 版面 第17项:跨页单元格长文本检查 通过 第17行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "18 结构 第18项:跨页单元格长文本检查 通过 第18行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "19 版面 第19项:跨页单元格长文本检查 通过 第19行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "20 结构 第20项:跨页单元格长文本检查 待复核 第20行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "21 版面 第21项:跨页单元格长文本检查 通过 第21行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "22 结构 第22项:跨页单元格长文本检查 通过 第22行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "23 版面 第23项:跨页单元格长文本检查 通过 第23行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "24 结构 第24项:跨页单元格长文本检查 通过 第24行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "25 版面 第25项:跨页单元格长文本检查 待复核 第25行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "26 结构 第26项:跨页单元格长文本检查 通过 第26行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "27 版面 第27项:跨页单元格长文本检查 通过 第27行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "28 结构 第28项:跨页单元格长文本检查 通过 第28行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "29 版面 第29项:跨页单元格长文本检查 通过 第29行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "30 结构 第30项:跨页单元格长文本检查 待复核 第30行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "31 版面 第31项:跨页单元格长文本检查 通过 第31行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "32 结构 第32项:跨页单元格长文本检查 通过 第32行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "33 版面 第33项:跨页单元格长文本检查 通过 第33行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "34 结构 第34项:跨页单元格长文本检查 通过 第34行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "35 版面 第35项:跨页单元格长文本检查 待复核 第35行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "36 结构 第36项:跨页单元格长文本检查 通过 第36行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "37 版面 第37项:跨页单元格长文本检查 通过 第37行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "38 结构 第38项:跨页单元格长文本检查 通过 第38行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "39 版面 第39项:跨页单元格长文本检查 通过 第39行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "40 结构 第40项:跨页单元格长文本检查 待复核 第40行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "41 版面 第41项:跨页单元格长文本检查 通过 第41行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "42 结构 第42项:跨页单元格长文本检查 通过 第42行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "43 版面 第43项:跨页单元格长文本检查 通过 第43行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "44 结构 第44项:跨页单元格长文本检查 通过 第44行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        }
+      ],
+      "tableCount": 1
+    },
+    {
+      "pageNumber": 6,
+      "blocks": [
+        {
+          "type": "text",
+          "text": "编号 分组 检查项 结论 说明",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "45 版面 第45项:跨页单元格长文本检查 待复核 第45行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "46 结构 第46项:跨页单元格长文本检查 通过 第46行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "47 版面 第47项:跨页单元格长文本检查 通过 第47行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "48 结构 第48项:跨页单元格长文本检查 通过 第48行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "49 版面 第49项:跨页单元格长文本检查 通过 第49行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "50 结构 第50项:跨页单元格长文本检查 待复核 第50行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "51 版面 第51项:跨页单元格长文本检查 通过 第51行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "52 结构 第52项:跨页单元格长文本检查 通过 第52行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "53 版面 第53项:跨页单元格长文本检查 通过 第53行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "54 结构 第54项:跨页单元格长文本检查 通过 第54行说明:长文本自动换行，验证续页表头、列边界与阅读顺序是否一致。",
+          "kind": "text"
+        },
+        {
+          "type": "heading",
+          "text": "5.1 表格后的正文",
+          "level": 3,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "跨页表格结束后这一段必须独立成段，不能被表格吞并，也不能与最后一个单元格连成一行。",
+          "kind": "text"
+        }
+      ],
+      "tableCount": 1
+    },
+    {
+      "pageNumber": 7,
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "6. 收尾与边界情况",
+          "level": 2,
+          "kind": "heading"
+        },
+        {
+          "type": "text",
+          "text": "左侧收尾:表格与正文之间只留一个空行；页脚\"第 N 页\"不应",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "混入正文；截图占位符应位于图题之后、下一节标题之前。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "右侧边界:单元格内的英文 Term、数字 0CR/OCR",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "混排；中文顿号、书名号、冒号与括号同时出现；标题层级为",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "#/##/### 三级。",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "表 3:收尾检查清单",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "检查点 期望 实际",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "标题层级 # / ## / ### 待人工核对",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "图片占位符 ![](images/...) 待人工核对",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "合并单元格 HTML colspan 待人工核对",
+          "kind": "text"
+        },
+        {
+          "type": "text",
+          "text": "文档结束。公式识别本轮不纳入，后续单独处理。",
+          "kind": "text"
+        }
+      ],
+      "tableCount": 1
+    }
+  ],
+  "stitchLog": []
+}
