@@ -3,28 +3,27 @@
  * viewable files. pdf.js hands back raw decoded pixels (RGB/RGBA/gray), so we
  * wrap them in a PNG container; JPEG/JPX sources keep their native bytes.
  */
-import { deflateSync } from 'node:zlib';
-import { OPS } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { deflateZlibStored } from './zlib.js';
 import { mul as mulMatrix, apply as applyMatrix } from './geom.js';
-
-const JPEG = new Set([OPS.paintJpegXObject]);
-const IMAGE = new Set([
-  OPS.paintImageXObject, OPS.paintImageXObjectRepeat,
-  OPS.paintInlineImageXObject, OPS.paintInlineImageXObjectGroup,
-  OPS.paintImageMaskXObject, OPS.paintImageMaskXObjectGroup,
-  OPS.paintXObject,
-]);
 
 // pdf.js ImageKind: 1 = GRAYSCALE_1BPP, 2 = RGB_24BPP, 3 = RGBA_32BPP
 const GRAY_1BPP = 1, RGB_24BPP = 2, RGBA_32BPP = 3;
 
 /** Extract images referenced by a page's operator list. */
-export async function extractPageImages(page, opList) {
+export async function extractPageImages(page, opList, OPS = {}) {
   const out = [];
   const seen = new Set();
+  const jpegOps = new Set([OPS.paintJpegXObject]);
+  const imageOps = new Set([
+    OPS.paintImageXObject, OPS.paintImageXObjectRepeat,
+    OPS.paintInlineImageXObject, OPS.paintInlineImageXObjectGroup,
+    OPS.paintImageMaskXObject, OPS.paintImageMaskXObjectGroup,
+    OPS.paintXObject,
+  ]);
   for (let i = 0; i < opList.fnArray.length; i++) {
     const fn = opList.fnArray[i];
-    if (!IMAGE.has(fn) && !JPEG.has(fn)) continue;
+    const isJpeg = jpegOps.has(fn);
+    if (!imageOps.has(fn) && !isJpeg) continue;
     const name = opList.argsArray[i][0];
     if (seen.has(name)) continue;
     seen.add(name);
@@ -36,18 +35,18 @@ export async function extractPageImages(page, opList) {
         catch { await new Promise(r => setTimeout(r, 25)); }
       }
       if (!img || (!img.data && !img.bitmap)) continue;
-      const bytes = await toViewableBytes(img, fn);
+      const bytes = await toViewableBytes(img, isJpeg);
       const ctm = findCtm(opList, i);
       // Position in the same coordinate space pdf.js reports text baselines
       // in, so the renderer can interleave the image placeholder with text.
-      const box = imageBox(opList, i);
+      const box = imageBox(opList, i, OPS);
       out.push({
         name,
         width: img.width,
         height: img.height,
         kind: img.kind,
         bytes,
-        contentType: contentType(img, fn),
+        contentType: contentType(img, isJpeg),
         placement: ctm,
         top: box ? box.top : null,
         left: box ? box.left : null,
@@ -57,13 +56,12 @@ export async function extractPageImages(page, opList) {
   return out;
 }
 
-function contentType(img, fn) {
-  if (JPEG.has(fn)) return 'image/jpeg';
-  if (img.kind === 'jpeg') return 'image/jpeg';
+function contentType(img, isJpeg) {
+  if (isJpeg || img.kind === 'jpeg') return 'image/jpeg';
   return 'image/png'; // pixels are wrapped in a PNG container below
 }
 
-async function toViewableBytes(img, fn) {
+async function toViewableBytes(img, isJpeg) {
   // Browser pdf.js resolves image XObjects to ImageBitmap (no raw `data`);
   // draw it on a canvas to get a real PNG. Node builds expose raw pixels.
   if (img.bitmap && !img.data && typeof document !== 'undefined') {
@@ -81,7 +79,7 @@ async function toViewableBytes(img, fn) {
     : new Uint8Array(img.data || []);
   if (!data.length) return new Uint8Array();
   // Native JPEG bytes: pass through untouched.
-  if (JPEG.has(fn) || img.kind === 'jpeg') return data;
+  if (isJpeg || img.kind === 'jpeg') return data;
   if (img.kind === RGB_24BPP) return encodePng(img.width, img.height, data, 2);
   if (img.kind === RGBA_32BPP) return encodePng(img.width, img.height, data, 6);
   if (img.kind === GRAY_1BPP || img.kind === 'gray') {
@@ -158,7 +156,7 @@ function encodePng(width, height, pixels, colorType) {
   return concatBytes(
     new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     pngChunk('IHDR', ihdr),
-    pngChunk('IDAT', deflateSync(raw, { level: 6 })),
+    pngChunk('IDAT', deflateZlibStored(raw)),
     pngChunk('IEND', new Uint8Array()),
   );
 }
@@ -169,7 +167,7 @@ function encodePng(width, height, pixels, colorType) {
  * including the page-level flip, so `top` is directly comparable to a text
  * line's `y`. Returns null when the transform chain is unusable.
  */
-function imageBox(opList, paintIdx) {
+function imageBox(opList, paintIdx, OPS = {}) {
   let ctm = [1, 0, 0, 1, 0, 0];
   const stack = [];
   for (let i = 0; i <= paintIdx && i < opList.fnArray.length; i++) {

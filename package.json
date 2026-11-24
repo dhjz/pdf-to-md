@@ -1,6 +1,6 @@
 {
   "name": "@dhjzz/pdf-to-md",
-  "version": "1.1.6",
+  "version": "1.1.9",
   "description": "Pure-text PDF to Markdown converter with binary image extraction and cross-page table stitching",
   "type": "module",
   "main": "src/index.js",

@@ -2,7 +2,7 @@
  * Generate real automatic conversion artifacts for the bundled evaluation PDFs.
  * No visual/manual input: every *_auto.md / *_auto.json comes from src/index.js.
  */
-import { readdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { convert } from '../src/index.js';
 
@@ -14,7 +14,7 @@ for (const file of files) {
   const base = file.replace(/\.pdf$/i, '');
   const input = resolve(dir, file);
   const t0 = performance.now();
-  const result = await convert(input, { tables: true, crossPageTables: true });
+  const result = await convert(readFileSync(input), { tables: true, crossPageTables: true });
   const ms = Math.round(performance.now() - t0);
   writeFileSync(resolve(dir, `${base}_auto.md`), result.markdown);
   writeFileSync(resolve(dir, `${base}_auto.json`), JSON.stringify({

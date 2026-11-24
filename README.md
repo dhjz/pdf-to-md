@@ -3,6 +3,7 @@
 一款纯文本 PDF → Markdown 的 JS 工具，按 Issue #1 中选定的基线方案实现：
 **pdf.js 文本层 + 自研 Layout→Markdown 结构化层**。
 
+- **大多数场景直接用浏览器 UMD 产物**：引入 `dist/pdftomd.umd.min.js` 即可在 browser 中本地转换，无需 Node 服务、不上传文件；详见下文「浏览器 UMD 产物」。
 - 纯 JS / Node.js 18+，核心不依赖任何 OCR 服务，也不调用 Python。
 - 图片以**原始二进制数据**输出（`Uint8Array`），不做识别、不写进 Markdown。
 - 支持把 Markdown 与图片打包成 ZIP（`.md` 在根、`images/` 子目录按 Markdown 占位符路径存放），第三方解压后本地直接打开即可看图。
@@ -11,6 +12,175 @@
 - 标题按编号深度分级：`一、`/`1` 为 `##`，`2.1` 为 `###`，`3.1.1` 为 `####`。
 - `evaluation/` 里**人工视觉稿**用 `_llm` 结尾、`*_auto.*` 是程序自动跑出的真实产物，两类严格分开，见 [评测说明](./evaluation/README.md)。
   不用相似度脚本当质量判据。
+
+## 浏览器 UMD 产物（推荐，大多数场景）
+
+这是最常用的一条路径：**直接在 browser 里跑**，无需后端、无需 `npm install`（`dist/pdftomd.umd.min.js` 已入库），文件全程不离开浏览器。
+
+| 文件 | 格式 | 用法 |
+| --- | --- | --- |
+| `dist/pdftomd.umd.min.js` | UMD/IIFE，暴露全局 `PdfToMd` | 浏览器 `<script src>` 直引；也可从 npm 包 `@dhjzz/pdf-to-md/umd` 取用 |
+| `src/index.js` | ESM 源码 | Node 18+ / 打包器 `import` 使用（见下方 [API](#api)） |
+
+> 只打包转换逻辑，pdf.js 不进包。**源码本身已同时兼容 Node 与 browser**：
+> 没有静态 `node:fs` / `node:zlib` 导入，浏览器路径完全不触碰 Node 模块；PNG 压缩用内置纯 JS zlib；
+> pdf.js 在 browser 从全局 `pdfjsLib` 读取，在 Node 按需动态 `import('pdfjs-dist/...')`。
+> `PdfToMd.convert()` 接收 `Uint8Array` / `ArrayBuffer` / `Blob`，也可传 `{ pdfjsLib }` 覆盖。
+
+用静态服务器打开页面（`file://` 下模块/worker 会被浏览器限制）：
+
+```bash
+npx serve .            # 默认 http://localhost:3000
+# 或 python3 -m http.server 8000
+```
+
+最小可运行示例（与仓库 `index.html` 一致）：
+
+```html
+<script>
+function installWithResolvers(scope) {
+  if (typeof scope.Promise.withResolvers === 'function') return;
+  scope.Promise.withResolvers = function () {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    return { promise, resolve, reject };
+  };
+}
+installWithResolvers(globalThis);
+// pdf.js 4.x 主线程和 worker 都需要 Promise.withResolvers 垫片
+window.pdfjsReady = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs')
+  .then(async (pdfjs) => {
+    window.pdfjsLib = pdfjs;
+    const workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+    const workerSource = '(' + installWithResolvers.toString() + ')(globalThis); await import("' + workerUrl + '");';
+    pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+      new Blob([workerSource], { type: 'text/javascript' })
+    );
+  });
+
+</script>
+
+<script src="dist/pdftomd.umd.min.js"></script>
+<script>
+async function convertPdf(file) {
+  await window.pdfjsReady;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const converted = await PdfToMd.convert(bytes, { tables: true });
+  console.log(converted.markdown, converted.images, converted.stats);
+  return converted;
+}
+
+async function downloadZip(result, fileName) {
+  const bytes = PdfToMd.createMarkdownZip(result, { fileName });
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/zip' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName.replace(/\.pdf$/i, '') + '.zip';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+```
+
+UMD 是 IIFE，用 `<script src>` 经典脚本加载即可挂出全局 `PdfToMd`；不要再传 `pdftomdDeflateRaw` 垫片，源码里已内置纯 JS zlib。
+
+浏览器里可直接拿到：`PdfToMd.version` / `PdfToMd.VERSION`、`PdfToMd.convert()`、`PdfToMd.createMarkdownZip()` / `PdfToMd.createZip()`。
+`images[].bytes` 是 `Uint8Array`，可 `URL.createObjectURL(new Blob([bytes], { type: img.contentType }))` 显示，或内联成 `data:` 写进 Markdown。
+
+重新生成产物：
+
+```bash
+npm install
+npm run build     # 生成 dist/pdftomd.umd.min.js（ESM 打包已注释）
+```
+
+Node / 打包器不需要 UMD，直接从源码入口 `import { convert } from '@dhjzz/pdf-to-md'`（见 [API](#api)）。
+
+## 安装
+
+```bash
+npm install
+```
+
+## CLI
+
+```bash
+node cli.js input.pdf -o output.md --images ./images
+node cli.js input.pdf --zip output.zip
+```
+
+| 参数 | 说明 |
+| --- | --- |
+| `-V, --version` | 输出版本号（当前 `1.1.9`） |
+| `-o, --output <file>` | 写出 Markdown（默认 stdout） |
+| `--json <file>` | 导出 JSON：markdown + 图片清单 + base64 二进制列表 + 页面块 |
+| `--images <dir>` | 导出图片二进制到目录 |
+| `--zip <file>` | 导出 Markdown + images/ 图片为可直接打开的 ZIP |
+| `--no-tables` | 关闭自动表格重建（默认开启矢量边框表格与无线框数字行兜底） |
+| `--strict` | 跨页表格仅在强证据下合并 |
+| `--no-cross-page` | 关闭跨页表格续接 |
+
+## API
+
+```js
+import { convert } from '@dhjzz/pdf-to-md';
+// 或 const { convert } = require('@dhjzz/pdf-to-md');
+
+// 浏览器 / Node 通用：传二进制。Node 可用 readFileSync('./test.pdf') 得到 Buffer。
+const bytes = new Uint8Array(await (await fetch('./test.pdf')).arrayBuffer());
+const { markdown, images, imageManifest, pages, stitchLog } = await convert(bytes, {
+  strict: false,           // 跨页表格严格模式（默认 false）
+  crossPageTables: true,   // 是否启用续表合并（默认 true）
+  tables: true,            // 是否重建表格（不传默认 true）
+  onStatus({ totalPages, currentPage, elapsedMs, stage }) {
+    console.log(`${currentPage}/${totalPages} ${stage} ${elapsedMs}ms`);
+  },
+});
+
+for (const img of images) {
+  // img.bytes 是 Uint8Array，可直接写入文件或上传对象存储
+  console.log(img.page, img.width, img.height, img.contentType, img.bytes.length);
+}
+
+// 把 Markdown + 原图打成 ZIP，第三方解压后本地直接打开
+import { convert, createMarkdownZip } from '@dhjzz/pdf-to-md';
+const result = await convert(new Uint8Array(await (await fetch('./report.pdf')).arrayBuffer()));
+const zipBytes = createMarkdownZip(result, { fileName: 'report.pdf' }); // Uint8Array
+// CLI: node cli.js report.pdf --zip report.zip
+```
+
+### 版本号
+
+库从 `1.0.0` 起维护版本，运行时可读取，浏览器与 Node 通用：
+
+```js
+// ESM / Node
+import { version, VERSION } from '@dhjzz/pdf-to-md';
+console.log(version);   // '1.1.9'
+
+// 浏览器 UMD：全局对象上直接读
+console.log(PdfToMd.version);   // '1.1.9'  （VERSION 同值）
+```
+
+CLI 可用 `node cli.js --version`（或 `-V`）查看。`package.json` 的 `version`
+与运行时版本由构建脚本校验，不会漂移。
+
+`convert()` 接受 `ArrayBuffer`、TypedArray/`Buffer`、`Blob`，Node 下仍兼容文件路径（按需动态 `import('node:fs/promises')`，浏览器不触碰），返回：
+
+- `markdown`: 转换后的 Markdown 字符串
+- `images`: 图片数组，每项含 `bytes`（原始二进制）、`width/height`、`contentType`、`page`
+- `imageManifest`: 图片清单（序号、页码、尺寸、字节数、占位符路径），不含二进制
+- `pages`: 每页的结构化 block（`heading` / `paragraph` / `table` / `toc`）
+- `stitchLog`: 跨页表格续接判定日志（当前渲染流保留接口）
+
+`options.tables` 不传即为 `true`；传 `false` 会关闭全部表格重建（退回纯文本行）。
+`options.onStatus` 在 PDF 加载后、每页开始/结束、整体完成时调用，参数为
+`{ totalPages, currentPage, elapsedMs, stage }`，其中 `stage` 为
+`loaded` / `page-start` / `page-done` / `done`；回调抛错不会中断转换。
+
+`createZip(files)` / `createMarkdownZip(result, { fileName })` 同样从包里导出：
+纯 JS 的 store 模式 ZIP 写入器，浏览器 UMD 用 `PdfToMd.createMarkdownZip(...)` 调用，
+生成 `Blob`/下载即可，不需要任何后端或第三方库。
 
 ## 核心处理逻辑
 
@@ -99,82 +269,6 @@ API 返回 `images[].bytes` 与 `imageManifest`，CLI `--json` 导出 base64，
 `sample_images/`：sample.pdf 内嵌图片的 PNG 二进制与 base64 清单（自动提取结果）。
 判断工具真实效果，基准必须是 `*_auto.*`。
 
-## 安装
-
-```bash
-npm install
-```
-
-## CLI
-
-```bash
-node cli.js input.pdf -o output.md --images ./images
-node cli.js input.pdf --zip output.zip
-```
-
-| 参数 | 说明 |
-| --- | --- |
-| `-V, --version` | 输出版本号（当前 `1.1.6`） |
-| `-o, --output <file>` | 写出 Markdown（默认 stdout） |
-| `--json <file>` | 导出 JSON：markdown + 图片清单 + base64 二进制列表 + 页面块 |
-| `--images <dir>` | 导出图片二进制到目录 |
-| `--zip <file>` | 导出 Markdown + images/ 图片为可直接打开的 ZIP |
-| `--no-tables` | 关闭自动表格重建（默认开启矢量边框表格与无线框数字行兜底） |
-| `--strict` | 跨页表格仅在强证据下合并 |
-| `--no-cross-page` | 关闭跨页表格续接 |
-
-## API
-
-```js
-import { convert } from '@dhjzz/pdf-to-md';
-// 或 const { convert } = require('@dhjzz/pdf-to-md');
-
-const { markdown, images, imageManifest, pages, stitchLog } = await convert('./test.pdf', {
-  strict: false,           // 跨页表格严格模式（默认 false）
-  crossPageTables: true,   // 是否启用续表合并（默认 true）
-  tables: true,            // 是否把连续数字行重建为 GFM 表格（默认开启）
-});
-
-for (const img of images) {
-  // img.bytes 是 Uint8Array，可直接写入文件或上传对象存储
-  console.log(img.page, img.width, img.height, img.contentType, img.bytes.length);
-}
-
-// 把 Markdown + 原图打成 ZIP，第三方解压后本地直接打开
-import { convert, createMarkdownZip } from '@dhjzz/pdf-to-md';
-const result = await convert('./report.pdf');
-const zipBytes = createMarkdownZip(result, { fileName: 'report.pdf' }); // Uint8Array
-// CLI: node cli.js report.pdf --zip report.zip
-```
-
-### 版本号
-
-库从 `1.0.0` 起维护版本，运行时可读取，浏览器与 Node 通用：
-
-```js
-// ESM / Node
-import { version, VERSION } from '@dhjzz/pdf-to-md';
-console.log(version);   // '1.1.6'
-
-// 浏览器 UMD：全局对象上直接读
-console.log(PdfToMd.version);   // '1.1.6'  （VERSION 同值）
-```
-
-CLI 可用 `node cli.js --version`（或 `-V`）查看。`package.json` 的 `version`
-与运行时版本由构建脚本校验，不会漂移。
-
-`convert()` 接受文件路径、`Buffer`、`Uint8Array` 或 `ArrayBuffer`，返回：
-
-- `markdown`: 转换后的 Markdown 字符串
-- `images`: 图片数组，每项含 `bytes`（原始二进制）、`width/height`、`contentType`、`page`
-- `imageManifest`: 图片清单（序号、页码、尺寸、字节数、占位符路径），不含二进制
-- `pages`: 每页的结构化 block（`heading` / `paragraph` / `table` / `toc`）
-- `stitchLog`: 跨页表格续接判定日志（当前渲染流保留接口）
-
-`createZip(files)` / `createMarkdownZip(result, { fileName })` 同样从包里导出：
-纯 JS 的 store 模式 ZIP 写入器，浏览器 UMD 用 `PdfToMd.createMarkdownZip(...)` 调用，
-生成 `Blob`/下载即可，不需要任何后端或第三方库。
-
 ## 结构化能力
 
 | 能力 | 实现位置 | 说明 |
@@ -197,37 +291,6 @@ CLI 可用 `node cli.js --version`（或 `-V`）查看。`package.json` 的 `ver
 
 ```js
 import { evaluateBoundaryRow, foldContinuationHeadRows } from '@dhjzz/pdf-to-md';
-```
-
-## 打包产物（UMD）
-
-仓库内已提交一份压缩产物，已入库、不被 `.gitignore` 忽略：
-
-| 文件 | 格式 | 适用场景 |
-| --- | --- | --- |
-| `dist/pdftomd.umd.min.js` | UMD/IIFE，全局 `PdfToMd` | 浏览器 `<script>` 直引；pdfjs 从全局 `pdfjsLib` 读取 |
-
-ESM 打包暂时用不到，已在 `build.js` 中注释；Node/打包器可直接从源码入口导入。
-
-> 只打包我们自己的转换逻辑；pdf.js 本身不进包（"不管 pdf.js"）。
-> UMD 在浏览器里需要宿主先提供全局 `pdfjsLib`；传 `Uint8Array`/`ArrayBuffer` 输入即可，
-> 不需要 node:fs。浏览器没有 `node:zlib`，宿主提供 `pdftomdDeflateRaw`（stored DEFLATE）即可封装图片。
-
-重建：
-
-```bash
-npm install
-npm run build     # 生成 dist/pdftomd.umd.min.js（ESM 打包已注释）
-```
-
-UMD（浏览器）用法：
-
-```html
-<script src="pdf.js"></script>   <!-- 提供全局 pdfjsLib -->
-<script src="pdftomd.umd.min.js"></script>
-<script>
-  const { markdown } = await PdfToMd.convert(uint8Array);
-</script>
 ```
 
 ## 测试

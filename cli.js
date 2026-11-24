@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve, basename, extname } from 'node:path';
 import { convert, createMarkdownZip, VERSION } from './src/index.js';
 
@@ -23,7 +23,7 @@ if (!args.length || args.includes('-h') || args.includes('--help')) {
 }
 const input = args.find(a => !a.startsWith('-'));
 const opt = (name, fallback) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : fallback; };
-const result = await convert(input, {
+const result = await convert(readFileSync(input), {
   debug: args.includes('--debug'),
   tables: !args.includes('--no-tables'),
   strict: args.includes('--strict'),

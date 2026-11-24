@@ -31,7 +31,14 @@ installWithResolvers(globalThis);
   const workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
   const workerSource = '(' + installWithResolvers.toString() + ')(globalThis); await import("' + workerUrl + '");';
   pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
-  await import('./dist/pdftomd.umd.min.js');
+  // UMD 是 IIFE，必须用经典 script 标签加载才会挂出全局 PdfToMd。
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = './dist/pdftomd.umd.min.js';
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('pdftomd.umd.min.js 加载失败'));
+    document.head.appendChild(script);
+  });
   window.dispatchEvent(new Event('pdftomd-ready'));
 </script>
 <style>
@@ -49,8 +56,8 @@ installWithResolvers(globalThis);
   header h1 { margin: 0 0 4px; font-size: 20px; }
   .version-badge { font-size: 11px; color: var(--muted); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; }
   header p { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
-  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
-  .drop-zone { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 14px; text-align: center; transition: .15s; background: #fbfcfe; cursor: pointer; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 6px 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .drop-zone { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 6px 14px; text-align: center; transition: .15s; background: #fbfcfe; cursor: pointer; }
   .drop-zone.drag-over { border-color: var(--primary); background: var(--primary-soft); }
   .drop-zone h2 { margin: 4px 0 2px; font-size: 15px; }
   .drop-zone p { margin: 2px 0; color: var(--muted); font-size: 12px; }
@@ -62,6 +69,10 @@ installWithResolvers(globalThis);
   .options label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; }
   .status { margin-top: 8px; font-size: 12px; color: var(--muted); }
   .status.error { color: var(--danger); }
+  .progress { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .progress-track { flex: 1; height: 6px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--primary); transition: width .15s ease; }
+  .progress-label { min-width: 76px; text-align: right; font-size: 11px; color: var(--muted); }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
   .stat { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; }
   .stat .k { color: var(--muted); font-size: 11px; }
@@ -94,7 +105,7 @@ installWithResolvers(globalThis);
         <h1>PDF → Markdown 转换器</h1>
         <span class="version-badge">v{{ coreVersion }}</span>
       </div>
-      <p>内核来自 pdf-to-md（pdf.js + 自研结构化层），转换全程在浏览器本地完成。</p>
+      <!-- <p>内核来自 pdf-to-md（pdf.js + 自研结构化层），转换全程在浏览器本地完成。</p> -->
     </header>
 
     <section class="panel">
@@ -107,9 +118,15 @@ installWithResolvers(globalThis);
       <div class="options">
         <label><input type="checkbox" v-model="includeImages" :disabled="busy" /> 在正文中包含图片（data:image base64 内联）</label>
         <label><input type="checkbox" v-model="tablesEnabled" :disabled="busy" /> 重建表格结构</label>
-        <button class="btn primary" @click="convertCurrent" :disabled="!file || busy">{{ busy ? '转换中…' : '重新转换' }}</button>
+        <button class="btn primary" @click="convertCurrent" :disabled="!file || busy || sampleLoading || urlLoading">{{ busy ? '转换中…' : '重新转换' }}</button>
+        <button class="btn" @click="loadSample" :disabled="busy || sampleLoading || urlLoading">{{ sampleLoading ? '加载中…' : '加载示例 PDF' }}</button>
+        <button class="btn" @click="loadFromUrl" :disabled="busy || sampleLoading || urlLoading">{{ urlLoading ? '下载中…' : 'url加载' }}</button>
       </div>
       <div class="status" :class="{ error: !!error }">{{ statusText }}</div>
+      <div class="progress" v-if="busy && progress && progress.totalPages">
+        <div class="progress-track"><div class="progress-bar" :style="{ width: progressPercent + '%' }"></div></div>
+        <span class="progress-label">{{ progress.currentPage }}/{{ progress.totalPages }} · {{ progressPercent }}%</span>
+      </div>
     </section>
 
     <section class="panel" v-if="stats">
@@ -158,28 +175,15 @@ installWithResolvers(globalThis);
 </div>
 
 <script>
-// 内核是浏览器版 UMD 产物；浏览器没有 node:zlib，提供等价的 stored-DEFLATE 实现。
-function pdftomdDeflateRaw(data) {
-  const out = new Uint8Array(2 + 5 * Math.ceil(data.length / 65535) + data.length);
-  let o = 0;
-  out[o++] = 0x78; out[o++] = 0x01;
-  let pos = 0;
-  do {
-    const len = Math.min(65535, data.length - pos);
-    const final = pos + len >= data.length ? 1 : 0;
-    out[o++] = final; out[o++] = len & 0xff; out[o++] = len >>> 8; out[o++] = (~len) & 0xff; out[o++] = ((~len) >>> 8) & 0xff;
-    out.set(data.subarray(pos, pos + len), o); o += len; pos += len;
-  } while (pos < data.length);
-  return out.subarray(0, o);
-}
-globalThis.pdftomdDeflateRaw = pdftomdDeflateRaw;
-
 const { createApp, ref, computed, onMounted, onBeforeUnmount } = Vue;
 const app = createApp({
   setup() {
     const file = ref(null);
     const pdfUrl = ref('');
     const busy = ref(false);
+    const sampleLoading = ref(false);
+    const urlLoading = ref(false);
+    const progress = ref(null);
     const dragging = ref(false);
     const includeImages = ref(true);
     const tablesEnabled = ref(true);
@@ -193,7 +197,31 @@ const app = createApp({
     const copied = ref(false);
     const fileInput = ref(null);
     const coreVersion = ref(globalThis.PdfToMd?.version || globalThis.PdfToMd?.VERSION || '-');
-    const statusText = computed(() => error.value ? error.value : busy.value ? '正在解析 PDF，请稍候…' : file.value ? `已就绪：${file.value.name}（${formatBytes(file.value.size)}）` : '等待选择 PDF 文件');
+    function formatElapsed(ms) { return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : ms + 'ms'; }
+    const progressPercent = computed(() => {
+      const p = progress.value;
+      if (!p || !p.totalPages) return 0;
+      if (p.stage === 'done') return 100;
+      const done = p.stage === 'page-start' ? Math.max(0, p.currentPage - 1) : p.currentPage;
+      return Math.min(100, Math.round(done / p.totalPages * 100));
+    });
+    const statusText = computed(() => {
+      if (error.value) return error.value;
+      if (sampleLoading.value) return '正在加载示例 PDF…';
+      if (urlLoading.value) return '正在通过代理下载 PDF…';
+      if (busy.value) {
+        const p = progress.value;
+        if (p && p.totalPages) {
+          const t = formatElapsed(p.elapsedMs);
+          if (p.stage === 'loaded') return `PDF 已加载，共 ${p.totalPages} 页 · 已耗时 ${t}`;
+          if (p.stage === 'page-start') return `正在转换第 ${p.currentPage}/${p.totalPages} 页 · 已耗时 ${t}`;
+          if (p.stage === 'page-done') return `已完成 ${p.currentPage}/${p.totalPages} 页 · 已耗时 ${t}`;
+          if (p.stage === 'done') return `转换完成，正在整理输出 · 已耗时 ${t}`;
+        }
+        return '正在解析 PDF，请稍候…';
+      }
+      return file.value ? `已就绪：${file.value.name}（${formatBytes(file.value.size)}）` : '等待选择 PDF 文件';
+    });
 
     function updateCoreVersion() {
       coreVersion.value = globalThis.PdfToMd?.version || globalThis.PdfToMd?.VERSION || '-';
@@ -252,13 +280,17 @@ const app = createApp({
     }
     async function run(fileToConvert) {
       if (!fileToConvert) return;
-      error.value = ''; result.value = null; copied.value = false;
+      error.value = ''; result.value = null; copied.value = false; progress.value = null;
       busy.value = true;
       const started = performance.now();
       try {
         console.info('[pdf-to-md] 开始转换', fileToConvert.name || 'PDF');
         const buffer = await fileToConvert.arrayBuffer();
-        const converted = await PdfToMd.convert(new Uint8Array(buffer), { tables: tablesEnabled.value, debug: true });
+        const converted = await PdfToMd.convert(new Uint8Array(buffer), {
+          tables: tablesEnabled.value,
+          debug: true,
+          onStatus: s => { progress.value = { ...s }; },
+        });
         console.info('[pdf-to-md] 转换完成', converted, `耗时 ${Math.round(performance.now() - started)}ms`);
         if (converted.diagnostics?.reason) console.log('[pdf-to-md] 未识别到文字:', converted.diagnostics.reason);
         const md = converted.markdown;
@@ -307,6 +339,54 @@ const app = createApp({
       if (files && files.length) { const f = files[0]; if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') { e.preventDefault(); acceptFile(f); } }
     }
     function convertCurrent() { run(file.value); }
+    async function loadSample() {
+      if (busy.value || sampleLoading.value) return;
+      sampleLoading.value = true;
+      error.value = '';
+      try {
+        const res = await fetch(new URL('evaluation/sample.pdf', document.baseURI));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        acceptFile(new File([blob], 'sample.pdf', { type: 'application/pdf' }));
+      } catch (e) {
+        console.error(e);
+        error.value = '示例 PDF 加载失败：' + (e && e.message ? e.message : String(e));
+      } finally {
+        sampleLoading.value = false;
+      }
+    }
+    async function loadFromUrl() {
+      if (busy.value || sampleLoading.value || urlLoading.value) return;
+      const input = window.prompt('请输入 PDF 网址：');
+      if (!input || !input.trim()) return;
+      let target;
+      try {
+        const raw = input.trim();
+        target = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+        if (!/^https?:$/.test(target.protocol)) throw new Error('仅支持 http/https 网址');
+      } catch (e) {
+        error.value = '网址无效：' + (e && e.message ? e.message : String(e));
+        return;
+      }
+      urlLoading.value = true;
+      error.value = '';
+      try {
+        const res = await fetch('https://x.199311.xyz/' + target.toString());
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        if (!(await blob.slice(0, 5).text()).trimStart().startsWith('%PDF-')) throw new Error('代理返回的不是 PDF 文件');
+        const last = target.pathname.split('/').pop() || '';
+        let name = last;
+        try { name = decodeURIComponent(last); } catch (e) { /* 保留原始路径片段 */ }
+        if (!/\.pdf$/i.test(name)) name = (name || 'document') + '.pdf';
+        acceptFile(new File([blob], name, { type: 'application/pdf' }));
+      } catch (e) {
+        console.error(e);
+        error.value = 'URL 加载失败：' + (e && e.message ? e.message : String(e));
+      } finally {
+        urlLoading.value = false;
+      }
+    }
     const activeText = computed(() => tab.value === 'md' ? markdown.value : tab.value === 'json' ? jsonText.value : previewHtml.value);
     function copyActive() {
       const text = tab.value === 'html' ? markdown.value : activeText.value;
@@ -342,7 +422,7 @@ const app = createApp({
       document.body.removeEventListener('dragleave', onDragLeave);
       document.body.removeEventListener('drop', onDrop);
     });
-    return { file, pdfUrl, busy, dragging, includeImages, tablesEnabled, error, statusText, result, markdown, jsonText, previewHtml, stats, tab, copied, fileInput, coreVersion, formatBytes, fmtNum, pickFile, onFileChange, onDrop, acceptFile, convertCurrent, copyActive, downloadActive, downloadZip };
+    return { file, pdfUrl, busy, sampleLoading, urlLoading, progress, progressPercent, dragging, includeImages, tablesEnabled, error, statusText, result, markdown, jsonText, previewHtml, stats, tab, copied, fileInput, coreVersion, formatBytes, fmtNum, pickFile, onFileChange, onDrop, acceptFile, convertCurrent, loadSample, loadFromUrl, copyActive, downloadActive, downloadZip };
   },
 });
 app.mount('#app');

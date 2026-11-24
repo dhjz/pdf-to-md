@@ -7,10 +7,9 @@
  * grid's column boundaries — so a real table is produced without dropping or
  * reordering a single character.  Images are raw binary; no OCR is used.
  */
-import { readFileSync } from 'node:fs';
 import { createZip, createMarkdownZip } from './zip.js';
 import { itemsToLines, pageContentMinX, pageContentWidth, applyLinkAnnotations } from './text.js';
-import { getDocument, OPS } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { getPdfjs } from './pdfjs.js';
 import { extractPageImages } from './images.js';
 import { formatTocLine } from './doc-format.js';
 import { collectRules, detectGridTables, borderlessNumericTables, borderlessLabelTables } from './tables.js';
@@ -30,6 +29,12 @@ const LOG_PREFIX = '[pdf-to-md]';
 
 function diag(options, ...args) {
   if (options?.debug) console.log(LOG_PREFIX, ...args);
+}
+
+function emitStatus(options, payload) {
+  if (typeof options.onStatus !== 'function') return;
+  try { options.onStatus(payload); }
+  catch (err) { diag(options, 'onStatus callback failed:', err); }
 }
 
 /** Why a page produced no text — used to turn a silent empty result into a clear message. */
@@ -71,7 +76,11 @@ function headingLevel(text) {
 }
 
 export async function convert(source, options = {}) {
-  const data = toUint8Array(source);
+  options = { tables: true, ...options };
+  const startedAt = performance.now();
+  const elapsedMs = () => Math.round(performance.now() - startedAt);
+  const data = await toUint8Array(source);
+  const { getDocument, OPS } = await getPdfjs(options);
   diag(options, `convert start: ${data.length} bytes`);
   const task = getDocument({
     data, useSystemFonts: true, isEvalSupported: false, verbosityLevel: 0,
@@ -79,12 +88,21 @@ export async function convert(source, options = {}) {
   });
   const doc = await task.promise;
   const pageCount = doc.numPages;
+  const status = (currentPage, stage) => emitStatus(options, {
+    totalPages: pageCount,
+    currentPage,
+    elapsedMs: elapsedMs(),
+    stage,
+  });
+  status(0, 'loaded');
   diag(options, `pdf loaded: ${pageCount} page(s)`);
   const pages = [];
   const images = [];
+  const tablesEnabled = options.tables !== false;
   try {
     for (let pno = 1; pno <= pageCount; pno++) {
       const page = await doc.getPage(pno);
+      status(pno, 'page-start');
       const [textContent, opList] = await Promise.all([page.getTextContent(), page.getOperatorList()]);
       let lines = itemsToLines(textContent.items);
       // Hyperlinks live in /Annots, not in the text layer. Attach link URIs to
@@ -127,15 +145,15 @@ export async function convert(source, options = {}) {
         'paintInlineImageXObjectGroup', 'paintSolidColorImageMask',
         'paintImageMaskXObject', 'paintImageMaskXObjectRepeat',
       ]);
-      const rules = collectRules(opList, OPS, {
+      const rules = tablesEnabled ? collectRules(opList, OPS, {
         pageHeight: page.view[3],
         textYs: lines.filter(l => !l.dropped).map(l => l.y),
-      });
-      const legacy = detectGridTables(rules)
+      }) : [];
+      const legacy = tablesEnabled ? detectGridTables(rules)
         .filter(t => !t.left || !t.right || t.right - t.left > 80)
         .filter(t => t.colEdges.length >= 2 && t.rowEdges.length >= 3)
-        .map(t => ({ ...t, cols: [...t.colEdges].sort((a, b) => a - b) }));
-      const grid = cellGridTables(opList, OPS, textContent.items).tables;
+        .map(t => ({ ...t, cols: [...t.colEdges].sort((a, b) => a - b) })) : [];
+      const grid = tablesEnabled ? cellGridTables(opList, OPS, textContent.items).tables : [];
       // Rule-based (legacy) grids are drawn with moveTo/lineTo instead of cell
       // rectangles (e.g. sample.pdf). Still project text into them so the
       // renderer can emit them as real tables rather than swallowing the rows.
@@ -146,19 +164,19 @@ export async function convert(source, options = {}) {
       // detected from aligned numeric baselines; add them where no vector grid
       // already covers the same rows.
       const vectorTables = grid.length ? grid : legacy;
-      const borderless = [
+      const borderless = tablesEnabled ? [
         ...borderlessNumericTables(textContent.items),
         ...borderlessLabelTables(textContent.items),
       ].filter(bt =>
         !vectorTables.some(t =>
-          bt.bottom <= t.top + 6 && bt.top >= t.bottom - 6)); // y-interval overlap
+          bt.bottom <= t.top + 6 && bt.top >= t.bottom - 6)) : []; // y-interval overlap
       // Cell-grid reconstruction (one rectangle per cell) yields far cleaner
       // logical rows than the legacy line-rule detector; prefer it when present.
       const tables = grid.length ? grid : legacy;
       // Skia/Chrome (browser print) draws table borders as thin filled
       // rectangles. Only look for those when no table was found by the usual
       // detectors, so other PDFs keep their existing output.
-      if (!tables.length) tables.push(...skiaGridTables(opList, OPS, textContent.items, {
+      if (tablesEnabled && !tables.length) tables.push(...skiaGridTables(opList, OPS, textContent.items, {
         pageWidth: page.view[2], pageHeight: page.view[3],
       }));
       tables.push(...borderless);
@@ -171,7 +189,7 @@ export async function convert(source, options = {}) {
         if (isProseTable(tables[i], options.maxTableCellLength)) tables.splice(i, 1);
       }
       tables.sort((a, b) => b.top - a.top);
-      const pageImages = await extractPageImages(page, opList);
+      const pageImages = await extractPageImages(page, opList, OPS);
       for (const img of pageImages) {
         img.page = pno;
         img.index = images.length + 1;
@@ -184,6 +202,7 @@ export async function convert(source, options = {}) {
       if (diagnosis) diag(options, `page ${pno}: ${diagnosis}`);
       pages.push({ pageNumber: pno, lines, tables, images: pageImages, imageStartIndex: images.length - pageImages.length, diagnosis, bgRects, pageWidth: page.view[2], pageHeight: page.view[3], contentMinX, links });
       page.cleanup?.(); // release per-page opList/image caches for large PDFs
+      status(pno, 'page-done');
     }
   } finally {
     await doc.destroy();
@@ -219,6 +238,7 @@ export async function convert(source, options = {}) {
       fileName: `p${img.page}-${i + 1}-${img.name}.${ext}`,
     };
   });
+  status(pageCount, 'done');
   return {
     markdown, images, imageManifest, stats,
     diagnostics: { emptyPages, reason: noTextReason },
@@ -240,12 +260,27 @@ async function collectPageLinks(page) {
   }
 }
 
-function toUint8Array(source) {
-  if (source instanceof Uint8Array) return source;
-  if (typeof Buffer !== 'undefined' && Buffer.isBuffer && Buffer.isBuffer(source)) return new Uint8Array(source);
-  if (typeof source === 'string') return new Uint8Array(readFileSync(source));
-  if (source?.buffer) return new Uint8Array(source.buffer);
-  throw new TypeError('convert() 需要文件路径、Buffer、Uint8Array 或 ArrayBuffer');
+async function toUint8Array(source) {
+  // pdf.js rejects Node Buffer (a Uint8Array subclass) — always hand it a plain view.
+  if (source instanceof Uint8Array) {
+    return source.constructor === Uint8Array
+      ? source
+      : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+  }
+  if (ArrayBuffer.isView(source)) return new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+  if (source instanceof ArrayBuffer) return new Uint8Array(source);
+  if (typeof Blob !== 'undefined' && source instanceof Blob) return new Uint8Array(await source.arrayBuffer());
+  if (source && typeof source.arrayBuffer === 'function') return new Uint8Array(await source.arrayBuffer());
+  if (typeof source === 'string') {
+    // Node-only convenience: no static node:fs import, so browsers never touch it.
+    if (typeof process !== 'undefined' && process.versions?.node) {
+      const spec = 'node:fs/promises';
+      const { readFile } = await import(/* @vite-ignore */ spec);
+      return new Uint8Array(await readFile(source));
+    }
+    throw new TypeError('浏览器不支持路径输入，请传 ArrayBuffer、TypedArray 或 Blob');
+  }
+  throw new TypeError('convert() 需要 ArrayBuffer、TypedArray/Buffer、Blob 或 Node 文件路径');
 }
 
 /**
