@@ -31,7 +31,7 @@ installWithResolvers(globalThis);
   const workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
   const workerSource = '(' + installWithResolvers.toString() + ')(globalThis); await import("' + workerUrl + '");';
   pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
-  await import('../dist/pdftomd.umd.min.js');
+  await import('./dist/pdftomd.umd.min.js');
   window.dispatchEvent(new Event('pdftomd-ready'));
 </script>
 <style>
