@@ -5,19 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>PDF → Markdown 转换器</title>
 
-<!-- Promise.withResolvers 垫片：pdf.js 4.x 主线程与 worker 都会用到（worker 里的 createStreamSink 也调），
-     老浏览器没有。这里定义一次，下面用 Blob 把同一份垫片注入到 worker 内部。 -->
-<script>
-function installWithResolvers(scope) {
-  if (typeof scope.Promise.withResolvers === 'function') return;
-  scope.Promise.withResolvers = function withResolvers() {
-    let resolve, reject;
-    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
-    return { promise, resolve, reject };
-  };
-}
-installWithResolvers(globalThis);
-</script>
+<!-- 先加载 UMD：它在模块初始化时安装 Promise.withResolvers 垫片，并导出 shimWR 供 worker 复用。 -->
+<script src="./dist/pdftomd.umd.min.js"></script>
 
 <!-- 第三方依赖一行一个 script src；pdf.js 保持项目既有内核 4.10.38，用 ES module 入口。 -->
 <script src="https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/vue/3.4.21/vue.global.prod.js"></script>
@@ -26,19 +15,10 @@ installWithResolvers(globalThis);
 <script type="module">
   import * as pdfjs from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
   window.pdfjsLib = pdfjs;
-  // worker 是独立作用域，主线程垫片够不到；用官方支持的 CDN wrapper：
-  // worker 内第一行先补同样的垫片，再 import 原 worker 文件。
+  // worker 是独立作用域，主线程垫片够不到；把内置垫片源码注入 worker 再 import 原 worker。
   const workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
-  const workerSource = '(' + installWithResolvers.toString() + ')(globalThis); await import("' + workerUrl + '");';
+  const workerSource = '(' + globalThis.PdfToMd.shimWR.toString() + ')(globalThis); await import("' + workerUrl + '");';
   pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
-  // UMD 是 IIFE，必须用经典 script 标签加载才会挂出全局 PdfToMd。
-  await new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = './dist/pdftomd.umd.min.js';
-    script.onload = resolve;
-    script.onerror = () => reject(new Error('pdftomd.umd.min.js 加载失败'));
-    document.head.appendChild(script);
-  });
   window.dispatchEvent(new Event('pdftomd-ready'));
 </script>
 <style>

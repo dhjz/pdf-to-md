@@ -37,30 +37,20 @@ npx serve .            # 默认 http://localhost:3000
 最小可运行示例（与仓库 `index.html` 一致）：
 
 ```html
-<script>
-function installWithResolvers(scope) {
-  if (typeof scope.Promise.withResolvers === 'function') return;
-  scope.Promise.withResolvers = function () {
-    let resolve, reject;
-    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
-    return { promise, resolve, reject };
-  };
-}
-installWithResolvers(globalThis);
-// pdf.js 4.x 主线程和 worker 都需要 Promise.withResolvers 垫片
-window.pdfjsReady = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs')
-  .then(async (pdfjs) => {
-    window.pdfjsLib = pdfjs;
-    const workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
-    const workerSource = '(' + installWithResolvers.toString() + ')(globalThis); await import("' + workerUrl + '");';
-    pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-      new Blob([workerSource], { type: 'text/javascript' })
-    );
-  });
-
-</script>
-
+<!-- UMD 先加载：自动安装 Promise.withResolvers，并暴露 PdfToMd.shimWR -->
 <script src="dist/pdftomd.umd.min.js"></script>
+<script type="module">
+  // pdf.js 4.x 主线程和 worker 都需要 Promise.withResolvers；主线程已由 UMD 补好。
+  window.pdfjsReady = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs')
+    .then(async (pdfjs) => {
+      window.pdfjsLib = pdfjs;
+      const workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+      const workerSource = '(' + globalThis.PdfToMd.shimWR.toString() + ')(globalThis); await import("' + workerUrl + '");';
+      pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+        new Blob([workerSource], { type: 'text/javascript' })
+      );
+    });
+</script>
 <script>
 async function convertPdf(file) {
   await window.pdfjsReady;
@@ -82,9 +72,10 @@ async function downloadZip(result, fileName) {
 </script>
 ```
 
-UMD 是 IIFE，用 `<script src>` 经典脚本加载即可挂出全局 `PdfToMd`；不要再传 `pdftomdDeflateRaw` 垫片，源码里已内置纯 JS zlib。
+UMD 是 IIFE，用 `<script src>` 经典脚本加载即可挂出全局 `PdfToMd`；不要再传 `pdftomdDeflateRaw`，源码里已内置纯 JS zlib。
+`Promise.withResolvers` 也已内置：UMD 加载即补主线程，worker 用导出的 `PdfToMd.shimWR.toString()` 注入同一份实现。
 
-浏览器里可直接拿到：`PdfToMd.version` / `PdfToMd.VERSION`、`PdfToMd.convert()`、`PdfToMd.createMarkdownZip()` / `PdfToMd.createZip()`。
+浏览器里可直接拿到：`PdfToMd.version` / `PdfToMd.VERSION`、`PdfToMd.convert()`、`PdfToMd.createMarkdownZip()` / `PdfToMd.createZip()`、`PdfToMd.shimWR()`。
 `images[].bytes` 是 `Uint8Array`，可 `URL.createObjectURL(new Blob([bytes], { type: img.contentType }))` 显示，或内联成 `data:` 写进 Markdown。
 
 重新生成产物：
@@ -111,7 +102,7 @@ node cli.js input.pdf --zip output.zip
 
 | 参数 | 说明 |
 | --- | --- |
-| `-V, --version` | 输出版本号（当前 `1.1.9`） |
+| `-V, --version` | 输出版本号（当前 `1.1.11`） |
 | `-o, --output <file>` | 写出 Markdown（默认 stdout） |
 | `--json <file>` | 导出 JSON：markdown + 图片清单 + base64 二进制列表 + 页面块 |
 | `--images <dir>` | 导出图片二进制到目录 |
@@ -156,10 +147,10 @@ const zipBytes = createMarkdownZip(result, { fileName: 'report.pdf' }); // Uint8
 ```js
 // ESM / Node
 import { version, VERSION } from '@dhjzz/pdf-to-md';
-console.log(version);   // '1.1.9'
+console.log(version);   // '1.1.11'
 
 // 浏览器 UMD：全局对象上直接读
-console.log(PdfToMd.version);   // '1.1.9'  （VERSION 同值）
+console.log(PdfToMd.version);   // '1.1.11'  （VERSION 同值）
 ```
 
 CLI 可用 `node cli.js --version`（或 `-V`）查看。`package.json` 的 `version`

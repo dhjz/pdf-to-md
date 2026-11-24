@@ -7,6 +7,7 @@
  * grid's column boundaries — so a real table is produced without dropping or
  * reordering a single character.  Images are raw binary; no OCR is used.
  */
+import './polyfill.js';
 import { createZip, createMarkdownZip } from './zip.js';
 import { itemsToLines, pageContentMinX, pageContentWidth, applyLinkAnnotations } from './text.js';
 import { getPdfjs } from './pdfjs.js';
@@ -633,6 +634,7 @@ function renderDocument(pages, tablesEnabled) {
   return { markdown: markdown + '\n', stitchLog: [] };
 }
 
+export { shimWR } from './polyfill.js';
 export { evaluateBoundaryRow, foldContinuationHeadRows } from './table-continuation.js';
 export { itemsToLines };
 export { VERSION, version } from './version.js';
